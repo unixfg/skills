@@ -1,0 +1,26 @@
+{
+  "context": "This criteria evaluates whether the agent can narrow to a known book first, then use the ebook-library skill to search within that specific book and return an on-topic excerpt.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "identifies the correct book",
+      "description": "Correctly identifies 'Twenty Thousand Leagues under the Sea' by Jules Verne and reports its book_id from the fixture library.",
+      "max_score": 30
+    },
+    {
+      "name": "searches within the scoped book",
+      "description": "Uses a book-scoped search flow, such as finding the book_id first and then using search_content.py with --book-id, rather than relying on an unnecessary global scan.",
+      "max_score": 25
+    },
+    {
+      "name": "returns a valid excerpt",
+      "description": "Returns a short excerpt that includes the term 'Leyden' and is clearly from the target book.",
+      "max_score": 30
+    },
+    {
+      "name": "explains script usage",
+      "description": "Briefly names the script or scripts used, such as find_books.py, search_content.py, or get_excerpt.py.",
+      "max_score": 15
+    }
+  ]
+}

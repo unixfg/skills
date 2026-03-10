@@ -1,0 +1,1 @@
+Metadata lookup by title or author using find_books.py against a small Calibre fixture library.

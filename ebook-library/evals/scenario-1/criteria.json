@@ -1,0 +1,26 @@
+{
+  "context": "This criteria evaluates whether the agent uses the ebook-library skill's metadata lookup flow correctly on a small Calibre fixture library, and whether it identifies the Jules Verne title accurately without guessing.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "correct title and author",
+      "description": "Correctly identifies the book as 'Twenty Thousand Leagues under the Sea' by Jules Verne.",
+      "max_score": 40
+    },
+    {
+      "name": "reports a book id",
+      "description": "Returns a concrete book_id obtained from the fixture library rather than omitting it or inventing one.",
+      "max_score": 20
+    },
+    {
+      "name": "uses metadata-first workflow",
+      "description": "Uses an appropriate metadata lookup flow such as find_books.py or list_books.py, instead of starting with a broad global content search.",
+      "max_score": 25
+    },
+    {
+      "name": "brief method explanation",
+      "description": "Briefly explains which script or command was used to find the answer.",
+      "max_score": 15
+    }
+  ]
+}
