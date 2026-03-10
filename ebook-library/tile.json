@@ -1,6 +1,6 @@
 {
   "name": "jobe-skills/ebook-library",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": false,
   "summary": "Use when the user asks about a Calibre ebook library or book collection: find books, search metadata or full text in EPUB/AZW3 files, or locate book paths via Calibre databases.",
   "skills": {
