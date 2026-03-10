@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="uuid_id" version="2.0">
+    <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+        <dc:identifier opf:scheme="calibre" id="calibre_id">6</dc:identifier>
+        <dc:identifier opf:scheme="uuid" id="uuid_id">5ebd1a03-aab9-4ca6-9778-f43d610a5381</dc:identifier>
+        <dc:title>The Communist Manifesto</dc:title>
+        <dc:creator opf:file-as="Marx, Karl &amp; Engels, Friedrich" opf:role="aut">Karl Marx</dc:creator>
+        <dc:creator opf:file-as="Marx, Karl &amp; Engels, Friedrich" opf:role="aut">Friedrich Engels</dc:creator>
+        <dc:contributor opf:file-as="calibre" opf:role="bkp">calibre (9.2.1) [https://calibre-ebook.com]</dc:contributor>
+        <dc:date>2005-01-25T00:00:00+00:00</dc:date>
+        <dc:identifier opf:scheme="URL">http://www.gutenberg.org/61</dc:identifier>
+        <dc:language>eng</dc:language>
+        <dc:subject>Socialism</dc:subject>
+        <dc:subject>Communism</dc:subject>
+        <meta name="calibre:timestamp" content="2026-03-10T20:27:01+00:00"/>
+        <meta name="calibre:title_sort" content="Communist Manifesto, The"/>
+    </metadata>
+    <guide>
+        <reference type="cover" title="Cover" href="cover.jpg"/>
+    </guide>
+</package>

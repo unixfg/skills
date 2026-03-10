@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='utf-8'?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="uuid_id" version="2.0">
+    <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+        <dc:identifier opf:scheme="calibre" id="calibre_id">4</dc:identifier>
+        <dc:identifier opf:scheme="uuid" id="uuid_id">3ef7600e-664a-408f-88d9-aff03df3e19d</dc:identifier>
+        <dc:title>The Problems of Philosophy</dc:title>
+        <dc:creator opf:file-as="Russell, Bertrand" opf:role="aut">Bertrand Russell</dc:creator>
+        <dc:contributor opf:file-as="calibre" opf:role="bkp">calibre (9.2.1) [https://calibre-ebook.com]</dc:contributor>
+        <dc:date>2004-06-02T00:00:00+00:00</dc:date>
+        <dc:identifier opf:scheme="URL">http://www.gutenberg.org/5827</dc:identifier>
+        <dc:language>eng</dc:language>
+        <dc:subject>Knowledge</dc:subject>
+        <dc:subject>Theory of</dc:subject>
+        <dc:subject>Metaphysics</dc:subject>
+        <dc:subject>Philosophy -- Introductions</dc:subject>
+        <meta name="calibre:timestamp" content="2026-03-10T20:25:41+00:00"/>
+        <meta name="calibre:title_sort" content="Problems of Philosophy, The"/>
+    </metadata>
+    <guide>
+        <reference type="cover" title="Cover" href="cover.jpg"/>
+    </guide>
+</package>
