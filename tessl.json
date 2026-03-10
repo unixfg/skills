@@ -1,8 +1,8 @@
 {
   "name": "skills",
   "dependencies": {
-    "jobe-skills/ebook-library": {
-      "version": "0.1.3"
+    "ebook-library": {
+      "version": "0.1.4"
     }
   }
 }
