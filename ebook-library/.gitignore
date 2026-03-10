@@ -1,0 +1,4 @@
+*.pyc
+*.json
+*.db
+*.skill

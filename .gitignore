@@ -1,0 +1,5 @@
+*
+!/.gitignore
+!/LICENSE
+!/ebook-library/
+!/ebook-library/**
