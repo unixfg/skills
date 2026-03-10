@@ -1,8 +1,0 @@
-{
-  "name": "skills",
-  "dependencies": {
-    "ebook-library": {
-      "version": "0.1.4"
-    }
-  }
-}
