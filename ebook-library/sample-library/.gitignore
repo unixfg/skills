@@ -1,15 +1,5 @@
-# Git ignore rules for a Calibre library
-metadata_db_prefs_backup.json
-.caltrash/
-.calnotes/
-backup/
-resources/
-retired/
-metadata.db-shm
-metadata.db-wal
-*.log
-.DS_Store
-
+.calnotes
+.caltrash
 !metadata.db
 !full-text-search.db
 !metadata_db_prefs_backup.json
