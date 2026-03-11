@@ -62,15 +62,15 @@ See `references/scripts.md` when you need exact commands, output shapes, fallbac
 
 ```bash
 # Step 1: Get book ID
-python3 scripts/find_books.py --db-path "$CALIBRE_METADATA_DB" --query "Automatic Noodle"
-# → book_id: 2525
+python3 scripts/find_books.py --db-path "$CALIBRE_METADATA_DB" --query "The Problems of Philosophy"
+# → book_id: 4
 
 # Step 2: Search within that book
 python3 scripts/search_content.py \
   --fts-db "$CALIBRE_FTS_DB" \
   --metadata-db "$CALIBRE_METADATA_DB" \
-  --book-id 2525 \
-  --query "chef" \
+  --book-id 4 \
+  --query "knowledge" \
   --context 400
 ```
 
@@ -97,7 +97,7 @@ If this returns `[]`, try a shorter query, search metadata first with `find_book
 python3 scripts/resolve_book.py \
   --metadata-db "$CALIBRE_METADATA_DB" \
   --library-root "$CALIBRE_LIBRARY_ROOT" \
-  --book-id 2525
+  --book-id 4
 
 # Then use ebook-convert or similar to extract text
 ```
@@ -111,15 +111,15 @@ If the returned format is not what you want, re-run with `--format EPUB` or anot
 python3 scripts/search_content.py \
   --fts-db "$CALIBRE_FTS_DB" \
   --metadata-db "$CALIBRE_METADATA_DB" \
-  --book-id 2525 \
-  --query "chef"
+  --book-id 4 \
+  --query "knowledge"
 
 # Step 2: Pull a larger excerpt around that word
 python3 scripts/get_excerpt.py \
   --fts-db "$CALIBRE_FTS_DB" \
   --metadata-db "$CALIBRE_METADATA_DB" \
-  --book-id 2525 \
-  --around "chef" \
+  --book-id 4 \
+  --around "knowledge" \
   --chars 1200
 ```
 
@@ -133,13 +133,13 @@ If `get_excerpt.py` says the keyword is not found, copy a nearby word from the s
 - `search_content.py` returns a JSON array for successful searches and a JSON error object for invalid `--book-id`, missing text, or empty queries.
 - `get_excerpt.py` and `resolve_book.py` return JSON objects and use an `"error"` field for invalid book IDs, missing text, bad positions, or missing formats.
 - When a `book_id` fails unexpectedly, re-run `find_books.py` first to confirm the title/author mapping before assuming the content index is wrong.
-- Prefer `--book-id` searches whenever possible. Global content searches hit a 4.5 GB database and are much slower.
+- Prefer `--book-id` searches whenever possible. Global content searches have to scan the full-text index and are much slower than metadata lookups or single-book searches.
 
 ---
 
 ## Notes
 
 - **Substring matching:** Searches use LIKE, so "ramen" matches "Sacramento"
-- **Global searches are slow:** The FTS database is 4.5GB. Always use `--book-id` when possible.
-- **Two formats per book:** Many books have both AZW3 and EPUB; results may show both.
+- **Global searches are slower:** They scan the library-wide full-text index, so prefer `--book-id` when the user already knows the title.
+- **Books may have multiple formats:** Prefer `--format` when the user needs a specific edition or when you need excerpts to line up with a particular file.
 - **Read-only workflow:** These scripts query Calibre databases and file paths only; they do not modify the library.

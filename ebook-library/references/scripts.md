@@ -36,7 +36,7 @@ Fast path for title and author lookup. Typical runtime is under 0.1s.
 ```bash
 python3 scripts/find_books.py \
   --db-path "$CALIBRE_METADATA_DB" \
-  --query "Automatic Noodle" \
+  --query "The Problems of Philosophy" \
   --limit 5
 ```
 
@@ -45,9 +45,9 @@ Typical output:
 ```json
 [
   {
-    "id": 2525,
-    "title": "Automatic Noodle",
-    "authors": "Annalee Newitz"
+    "id": 4,
+    "title": "The Problems of Philosophy",
+    "authors": "Bertrand Russell"
   }
 ]
 ```
@@ -66,8 +66,8 @@ Within a specific book:
 python3 scripts/search_content.py \
   --fts-db "$CALIBRE_FTS_DB" \
   --metadata-db "$CALIBRE_METADATA_DB" \
-  --book-id 2525 \
-  --query "chef" \
+  --book-id 4 \
+  --query "knowledge" \
   --context 400
 ```
 
@@ -95,8 +95,8 @@ Get a larger excerpt around a keyword or absolute character position.
 python3 scripts/get_excerpt.py \
   --fts-db "$CALIBRE_FTS_DB" \
   --metadata-db "$CALIBRE_METADATA_DB" \
-  --book-id 2525 \
-  --around "Abdulla" \
+  --book-id 4 \
+  --around "knowledge" \
   --chars 800
 ```
 
@@ -112,15 +112,15 @@ Options:
 Common failures are JSON objects like:
 
 ```json
-{"error": "Book 2525 not found"}
+{"error": "Book 4 not found"}
 ```
 
 ```json
-{"error": "No text found for book 2525"}
+{"error": "No text found for book 4"}
 ```
 
 ```json
-{"error": "Keyword 'X' not found in book", "book_id": 2525, "title": "Some Title"}
+{"error": "Keyword 'X' not found in book", "book_id": 4, "title": "The Problems of Philosophy"}
 ```
 
 The successful response also includes the chosen `format`.
@@ -130,8 +130,8 @@ The successful response also includes the chosen `format`.
 Wrapper that combines find plus content search.
 
 ```bash
-./scripts/query-book.sh "Book Title" "search term"
-./scripts/query-book.sh --id 2525 "search term"
+./scripts/query-book.sh "The Problems of Philosophy" "knowledge"
+./scripts/query-book.sh --id 4 "knowledge"
 ```
 
 Use this when the user names one book and wants a fast, single-command lookup.
@@ -146,7 +146,7 @@ Resolve a Calibre book ID to a concrete file path.
 python3 scripts/resolve_book.py \
   --metadata-db "$CALIBRE_METADATA_DB" \
   --library-root "$CALIBRE_LIBRARY_ROOT" \
-  --book-id 2525 \
+  --book-id 4 \
   --format EPUB
 ```
 
@@ -184,4 +184,4 @@ It returns counts such as `book_count`, `author_count`, `format_counts`, and `sa
 - `search_content.py` returns a JSON array for successful searches and a JSON error object for invalid `--book-id`, missing text, or empty queries.
 - `get_excerpt.py` and `resolve_book.py` return JSON objects and use an `"error"` field for invalid book IDs, missing text, bad positions, or missing formats.
 - When a `book_id` fails unexpectedly, rerun `find_books.py` first to confirm the title and author mapping before assuming the content index is wrong.
-- Prefer `--book-id` searches whenever possible. Global content searches hit a 4.5 GB database and are much slower.
+- Prefer `--book-id` searches whenever possible. Global content searches have to scan the full-text index and are much slower.

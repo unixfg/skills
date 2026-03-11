@@ -2,8 +2,8 @@
 # query-book.sh - Simple wrapper to search within a specific book
 #
 # Usage:
-#   ./query-book.sh "Book Title" "search term"
-#   ./query-book.sh --id 2525 "search term"
+#   ./query-book.sh "The Problems of Philosophy" "knowledge"
+#   ./query-book.sh --id 4 "knowledge"
 
 set -euo pipefail
 
@@ -22,8 +22,8 @@ usage() {
     echo "       $0 --id <book-id> <search-term> [--chars N]"
     echo ""
     echo "Examples:"
-    echo "  $0 'Automatic Noodle' 'chef'"
-    echo "  $0 --id 2525 'Abdulla'"
+    echo "  $0 'The Problems of Philosophy' 'knowledge'"
+    echo "  $0 --id 4 'knowledge'"
     echo ""
     echo "Set CALIBRE_METADATA_DB and CALIBRE_FTS_DB, or set CALIBRE_LIBRARY_ROOT."
     exit 1
