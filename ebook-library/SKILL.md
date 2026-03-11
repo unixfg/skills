@@ -9,19 +9,6 @@ Use this skill when the user wants to search a Calibre library, find books in an
 
 Access a Calibre ebook library via read-only SQLite queries.
 
-## Execution Model
-
-This skill performs fast database queries that don't need heavy reasoning.
-If running on an expensive model (Opus, GPT-5), spawn a sub-agent for the search:
-
-```
-sessions_spawn --task "Search ebook library: <query details>" --model openai/gpt-5-nano
-```
-
-The sub-agent returns raw results; the calling model interprets them.
-
----
-
 ## Database Discovery
 
 Prefer environment variables so commands stay portable:
