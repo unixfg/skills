@@ -1,8 +1,8 @@
 {
   "name": "jobe-skills/ebook-library",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": false,
-  "summary": "Use when the user asks about a Calibre ebook library or book collection: find books, search metadata or full text in EPUB/AZW3 files, or locate book paths via Calibre databases.",
+  "summary": "Use when the user asks about a Calibre ebook library or book collection: find books,quotes,facts; search metadata and full text index Calibre databases.",
   "skills": {
     "ebook-library": {
       "path": "SKILL.md"

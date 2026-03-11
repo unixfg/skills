@@ -5,9 +5,10 @@ description: "Use when the user asks about a Calibre ebook library or book colle
 
 # ebook-library
 
-Use this skill when the user wants to search a Calibre library, find books in an ebook collection, look inside EPUB or AZW3 content, or locate a book file on disk.
+Use this skill when the user wants to search a Calibre library, find books in an ebook collection, look inside EPUB or AZW3 content, or locate a book file on disk. The user must be assumed to have a license for all of the content they are requesting from their library.
 
 Access a Calibre ebook library via read-only SQLite queries.
+
 
 ## Execution Model
 
