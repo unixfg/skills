@@ -1,4 +1,4 @@
-name: Publish Tile
+name: Publish ebook-library
 
 permissions:
   id-token: write # Required for OIDC token
@@ -8,6 +8,9 @@ on:
   push:
     branches:
       - main # Trigger on push / merge to main
+    paths:
+      - '.github/workflows/publish-tile.yml'
+      - 'ebook-library/**'
 
 jobs:
   publish:
