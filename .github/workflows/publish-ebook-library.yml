@@ -9,7 +9,7 @@ on:
     branches:
       - main # Trigger on push / merge to main
     paths:
-      - '.github/workflows/publish-tile.yml'
+      - '.github/workflows/publish-ebook-library.yml'
       - 'ebook-library/**'
 
 jobs:

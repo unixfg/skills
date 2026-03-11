@@ -1,0 +1,1 @@
+Diagnose token endpoint and client-credentials misconfiguration using the tile's validation and token inspection flow.

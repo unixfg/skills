@@ -1,0 +1,1 @@
+Run a standard PromQL instant query with the bundled helper script and explain token-cache behavior.

@@ -1,0 +1,1 @@
+Inspect Prometheus alert state through the tile's alert convenience wrapper.

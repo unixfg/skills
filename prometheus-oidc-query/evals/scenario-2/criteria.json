@@ -1,0 +1,26 @@
+{
+  "context": "This criteria evaluates whether the agent uses the tile's configuration validation and troubleshooting flow for token acquisition problems.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "starts with validation tooling",
+      "description": "Uses `check_config.py` or `prom_query.py config` before deeper debugging.",
+      "max_score": 30
+    },
+    {
+      "name": "attributes failure to token acquisition",
+      "description": "Correctly distinguishes token endpoint problems from Prometheus query problems.",
+      "max_score": 30
+    },
+    {
+      "name": "recommends a confirming command",
+      "description": "Suggests a concrete next command such as `python3 scripts/prom_query.py token --refresh` or `python3 scripts/check_config.py`.",
+      "max_score": 20
+    },
+    {
+      "name": "avoids tool-maintainer framing",
+      "description": "Keeps the response focused on operating the helper skill rather than rebuilding a custom CLI.",
+      "max_score": 20
+    }
+  ]
+}

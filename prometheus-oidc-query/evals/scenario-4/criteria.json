@@ -1,0 +1,26 @@
+{
+  "context": "This criteria evaluates whether the agent uses the tile's local validation path before attempting network activity when the environment may be incomplete.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "uses local validation path",
+      "description": "Runs or references `python3 scripts/check_config.py` or `python3 scripts/prom_query.py config`.",
+      "max_score": 35
+    },
+    {
+      "name": "reports concrete validation errors",
+      "description": "Identifies missing required variables or malformed URLs instead of guessing.",
+      "max_score": 35
+    },
+    {
+      "name": "avoids premature network calls",
+      "description": "Does not recommend firing a live query before configuration is valid.",
+      "max_score": 20
+    },
+    {
+      "name": "does not expose secrets",
+      "description": "Keeps client secrets and access tokens redacted.",
+      "max_score": 10
+    }
+  ]
+}

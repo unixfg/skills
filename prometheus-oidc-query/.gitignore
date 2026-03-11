@@ -1,3 +1,5 @@
 *.skill
 *.tgz
 !tile.json
+__pycache__/
+*.pyc

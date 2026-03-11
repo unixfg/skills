@@ -1,0 +1,23 @@
+name: Publish prometheus-oidc-query
+
+permissions:
+  id-token: write
+  contents: read
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/publish-prometheus-oidc-query.yml"
+      - "prometheus-oidc-query/**"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: tesslio/publish@main
+        with:
+          token: ${{ secrets.TESSL_API_TOKEN }}
+          path: "./prometheus-oidc-query"

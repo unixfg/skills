@@ -1,7 +1,0 @@
-# Example configuration for prom-fetcher
-# Copy to ~/.config/prom-fetcher/config.yaml and customize
-
-keycloak_url: https://auth.doesthings.io
-keycloak_realm: doesthings.io
-client_id: prom-fetcher
-prometheus_url: https://prometheus.doesthings.io
