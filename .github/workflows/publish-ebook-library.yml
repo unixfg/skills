@@ -6,11 +6,9 @@ permissions:
 
 on:
   push:
-    branches:
-      - main # Trigger on push / merge to main
-    paths:
-      - '.github/workflows/publish-ebook-library.yml'
-      - 'ebook-library/**'
+    # Publish only from explicit release tags for this tile.
+    tags:
+      - 'tessl-ebook-library-*'
 
 jobs:
   publish:

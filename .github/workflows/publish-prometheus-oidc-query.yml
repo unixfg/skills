@@ -6,11 +6,9 @@ permissions:
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/publish-prometheus-oidc-query.yml"
-      - "prometheus-oidc-query/**"
+    # Publish only from explicit release tags for this tile.
+    tags:
+      - "tessl-prometheus-oidc-query-*"
 
 jobs:
   publish:
