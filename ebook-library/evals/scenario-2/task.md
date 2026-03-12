@@ -1,17 +1,20 @@
-# Find an excerpt from a known book in the sample Calibre library
+# Fall back to browsing when a metadata search fails
 
 Use the fixture library at `./sample-library/` and the local scripts in `./scripts/`.
 
+A user says they want the sea adventure novel in the fixture library, but a first metadata lookup using the phrase `ocean depths` returns no matches.
+
 Goal:
-- locate `Twenty Thousand Leagues under the Sea` by Jules Verne
-- search within that specific book for a passage mentioning `Leyden`
-- return:
-  - the `book_id`
-  - the book title
-  - a short excerpt that includes the term `Leyden`
-  - a brief note on which script(s) you used
+- do not guess from the failed search alone
+- fall back to browsing the fixture library titles
+- identify the most likely matching book
+- report the `book_id`, exact title, and author
+- briefly explain the fallback workflow you used
 
 Constraints:
-- prefer narrowing to the correct `book_id` first, then search within that book
-- do not do a broad global content search unless you first fail to identify the book
-- use the fixture data, not prior knowledge
+- start with metadata lookup
+- if the first lookup returns `[]`, use `list_books.py` to inspect available titles
+- do not use broad global content search for this task
+
+Expected outcome:
+- the correct book is `Twenty Thousand Leagues under the Sea` by Jules Verne

@@ -1,17 +1,17 @@
-# Identify a philosophy book and resolve its file path in the sample Calibre library
+# Find an excerpt from a known book in the sample Calibre library
 
-Use the fixture library at `./sample-library/`.
+Use the fixture library at `./sample-library/` and the local scripts in `./scripts/`.
 
 Goal:
-- identify which book in the fixture library is primarily about philosophy
-- report the title and author
-- resolve and return a concrete file path for the preferred readable format (EPUB if available)
-- briefly explain which script(s) you used
-
-Expected book:
-- `The Problems of Philosophy` by Bertrand Russell
+- locate `Twenty Thousand Leagues under the Sea` by Jules Verne
+- search within that specific book for a passage mentioning `Leyden`
+- return:
+  - the `book_id`
+  - the book title
+  - a short excerpt that includes the term `Leyden`
+  - a brief note on which script(s) you used
 
 Constraints:
-- use the local `ebook-library` scripts
-- use metadata and/or content search to confirm the correct title
-- use `resolve_book.py` to get the final path rather than inventing the path manually
+- prefer narrowing to the correct `book_id` first, then search within that book
+- do not do a broad global content search unless you first fail to identify the book
+- use the fixture data, not prior knowledge

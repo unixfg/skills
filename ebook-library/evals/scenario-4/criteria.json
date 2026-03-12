@@ -1,0 +1,26 @@
+{
+  "context": "This criteria evaluates whether the agent can recognize when a global content search is the right tool, identify the best matching book from the results, and justify the answer with fixture evidence.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "uses global content search appropriately",
+      "description": "Uses search_content.py without a book_id, or an equivalent global content search flow, because the title is not known up front.",
+      "max_score": 30
+    },
+    {
+      "name": "identifies the correct book",
+      "description": "Correctly identifies 'The Communist Manifesto' by Karl Marx and Friedrich Engels and reports its real book_id.",
+      "max_score": 35
+    },
+    {
+      "name": "provides evidence from results",
+      "description": "Includes a snippet or concise explanation showing that the match comes from the fixture search results rather than prior knowledge.",
+      "max_score": 20
+    },
+    {
+      "name": "brief method explanation",
+      "description": "Briefly explains which script or command was used.",
+      "max_score": 15
+    }
+  ]
+}

@@ -1,9 +1,9 @@
-# Find a book by author and title clues in the sample Calibre library
+# Identify a book from author and title clues in the sample Calibre library
 
 Use the local `ebook-library` skill resources and the fixture library at `./sample-library/`.
 
 Goal:
-- identify the book by Jules Verne in the fixture library
+- identify the Jules Verne book in the fixture library
 - report the `book_id`, exact title, and author
 - briefly explain which script or command you used
 

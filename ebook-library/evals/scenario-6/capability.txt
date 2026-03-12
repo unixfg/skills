@@ -1,0 +1,1 @@
+Path resolution for a preferred readable format using resolve_book.py after identifying the correct title.

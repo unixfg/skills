@@ -1,1 +1,1 @@
-Book-scoped full-text search and excerpt retrieval using search_content.py and get_excerpt.py.
+Fallback from failed metadata search to browsing the fixture library with list_books.py instead of guessing.

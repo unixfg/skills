@@ -1,0 +1,26 @@
+{
+  "context": "This criteria evaluates whether the agent follows the intended two-step workflow for larger passage retrieval instead of stopping after the first snippet.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "identifies the correct book",
+      "description": "Correctly identifies the target book and reports its real book_id from the fixture library.",
+      "max_score": 20
+    },
+    {
+      "name": "uses search then excerpt workflow",
+      "description": "Uses search_content.py to find the hit and then get_excerpt.py to pull a larger passage, or otherwise clearly performs the equivalent two-step workflow.",
+      "max_score": 35
+    },
+    {
+      "name": "returns a longer excerpt around the match",
+      "description": "Returns a passage longer than a minimal snippet and centered on the requested match, clearly drawn from the target book.",
+      "max_score": 30
+    },
+    {
+      "name": "brief method explanation",
+      "description": "Briefly explains which scripts were used for the initial hit and the expanded excerpt.",
+      "max_score": 15
+    }
+  ]
+}

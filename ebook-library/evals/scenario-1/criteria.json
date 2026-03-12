@@ -5,17 +5,17 @@
     {
       "name": "correct title and author",
       "description": "Correctly identifies the book as 'Twenty Thousand Leagues under the Sea' by Jules Verne.",
-      "max_score": 40
+      "max_score": 35
     },
     {
-      "name": "reports a book id",
-      "description": "Returns a concrete book_id obtained from the fixture library rather than omitting it or inventing one.",
+      "name": "reports a real book id",
+      "description": "Returns the correct book_id from the fixture library rather than omitting it or inventing one.",
       "max_score": 20
     },
     {
       "name": "uses metadata-first workflow",
       "description": "Uses an appropriate metadata lookup flow such as find_books.py or list_books.py, instead of starting with a broad global content search.",
-      "max_score": 25
+      "max_score": 30
     },
     {
       "name": "brief method explanation",

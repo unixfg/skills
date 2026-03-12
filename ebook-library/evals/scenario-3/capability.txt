@@ -1,1 +1,1 @@
-Global search plus path resolution using find_books.py, search_content.py, and resolve_book.py.
+Book-scoped full-text search within a known title using find_books.py plus search_content.py with --book-id.
