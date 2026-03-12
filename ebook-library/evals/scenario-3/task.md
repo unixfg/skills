@@ -1,17 +1,16 @@
-# Find an excerpt from a known book in the sample Calibre library
+# Honest no-match handling (must not hallucinate)
 
 Use the bundled sample library at `./sample-library`.
 
+A user asks for the book mentioning `warp drive`.
+
 Goal:
-- locate `Twenty Thousand Leagues under the Sea` by Jules Verne
-- search within that specific book for a passage mentioning `Leyden`
-- return:
-  - the `book_id`
-  - the book title
-  - a short excerpt that includes the term `Leyden`
-  - a brief note on how you found it
+- search the fixture library for that term
+- return the result honestly
+- if there are no matches, state that clearly and do not invent a book title
+- include brief evidence of how you checked
 
 Constraints:
-- prefer narrowing to the correct `book_id` first, then search within that book
-- do not do a broad global content search unless you first fail to identify the book
-- use the fixture data, not prior knowledge
+- use fixture lookup tools only
+- report an empty result if that is what the search returns
+- do not invent a likely match or excerpt

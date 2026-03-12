@@ -8,9 +8,10 @@ Expected fixture layout:
 
 - `./sample-library/metadata.db`
 - `./sample-library/full-text-search.db`
+- adversarial placeholder book files mixed into the same fixture
 - book files in normal Calibre per-author/per-book folders
 
-Current fixture books:
+Current fixture books (core):
 
 1. `Twenty Thousand Leagues under the Sea` - Jules Verne
 2. `The Problems of Philosophy` - Bertrand Russell
@@ -24,21 +25,17 @@ Known IDs in the current fixture:
 
 Why this fixture works well:
 
-- distinctive titles and authors for metadata lookup
-- distinctive searchable terms such as `Leyden` and `bourgeois`
-- both `EPUB` and `TXT` formats present for every book, which is useful for format-aware flows
-- small enough that fallback behavior can be evaluated cleanly
+- mixed genres and authors for behavior coverage
+- metadata IDs and searchable text are deterministic
+- includes mixed-quality placeholder/variant files to test path-only shortcutting
+- small enough for quick, repeatable scoring
 
-Scenario coverage in this eval set:
+Scenario coverage in this eval set (3 total):
 
-1. metadata lookup from title/author clues
-2. fallback from failed metadata search to browsing the library
-3. scoped full-text search within a known book
-4. global content search when the title is unknown
-5. longer excerpt retrieval after an initial hit
-6. path resolution for a preferred readable format
-7. honest no-match handling without hallucination
+1. content-driven identification without title-path clues
+2. path-trap/global content match in a mixed fixture
+3. honest no-result handling (must not hallucinate)
 
-Each scenario assumes the agent can use the skill's bundled resources and point them at the sample library when needed.
+Each scenario assumes the agent can use the skill's bundled scripts and point them at the sample library when needed.
 
 Before running evals, verify the fixture exists and contains working Calibre databases.

@@ -1,26 +1,26 @@
 {
-  "context": "This criteria evaluates whether the agent uses the ebook-library skill's metadata lookup flow correctly on a small Calibre fixture library, and whether it identifies the Jules Verne title accurately without guessing.",
+  "context": "This scenario checks that the agent can answer from searchable fixture content rather than metadata clues in file names.",
   "type": "weighted_checklist",
   "checklist": [
     {
-      "name": "correct title and author",
-      "description": "Correctly identifies the book as 'Twenty Thousand Leagues under the Sea' by Jules Verne.",
+      "name": "correct book identified",
+      "description": "Reports the exact title 'The Problems of Philosophy', author 'Bertrand Russell', and book_id 4 from the fixture library.",
       "max_score": 35
     },
     {
-      "name": "reports a real book id",
-      "description": "Returns the correct book_id from the fixture library rather than omitting it or inventing one.",
-      "max_score": 20
-    },
-    {
-      "name": "uses metadata-first workflow",
-      "description": "Uses an appropriate metadata-first lookup flow instead of starting with a broad global content search.",
+      "name": "content-derived discovery",
+      "description": "Uses content or metadata lookup against fixture data (not filename inference) and identifies the book based on the sense-data/G.E. Moore clue.",
       "max_score": 30
     },
     {
-      "name": "brief method explanation",
-      "description": "Briefly explains which script or command was used to find the answer.",
-      "max_score": 15
+      "name": "evidence snippet",
+      "description": "Includes a short quote/snippet from the fixture lookup showing both relevance to the provided clue and source of truth.",
+      "max_score": 25
+    },
+    {
+      "name": "process explanation",
+      "description": "Briefly explains the lookup sequence used (query + validation) and stays consistent with the returned evidence.",
+      "max_score": 10
     }
   ]
 }

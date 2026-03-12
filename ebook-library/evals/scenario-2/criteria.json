@@ -1,25 +1,25 @@
 {
-  "context": "This criteria evaluates whether the agent handles an initial metadata miss honestly, falls back to browsing titles, and avoids hallucinating an answer from weak clues.",
+  "context": "This scenario tests path-resistance: the fixture includes plausible-looking directories and files that should be ignored unless supported by searchable text evidence.",
   "type": "weighted_checklist",
   "checklist": [
     {
-      "name": "acknowledges initial miss or behaves consistently with it",
-      "description": "Shows that the first metadata lookup did not find a match, or otherwise clearly avoids pretending the failed query succeeded.",
-      "max_score": 20
-    },
-    {
-      "name": "uses metadata browsing as fallback",
-      "description": "Uses a metadata browsing fallback after the failed lookup, rather than guessing or switching immediately to an unnecessary global content search.",
-      "max_score": 30
-    },
-    {
-      "name": "identifies the correct book",
-      "description": "Correctly identifies 'Twenty Thousand Leagues under the Sea' by Jules Verne and reports its real book_id from the fixture library.",
+      "name": "correct book identified",
+      "description": "Reports the exact title 'The Communist Manifesto', author(s) 'Karl Marx, Friedrich Engels', and book_id 6.",
       "max_score": 35
     },
     {
-      "name": "briefly explains fallback method",
-      "description": "Briefly explains the fallback workflow used after the initial no-match result.",
+      "name": "uses fixture content search",
+      "description": "Uses a fixture content search path that proves the match from text (not from filenames/folder names).",
+      "max_score": 30
+    },
+    {
+      "name": "supports claim with snippet",
+      "description": "Includes evidence snippet containing the required terms ('spectre', 'Metternich', 'Czar'), showing the source is real content from the fixture.",
+      "max_score": 20
+    },
+    {
+      "name": "notes method",
+      "description": "Briefly notes the discovery method and states why the chosen match was selected from content evidence.",
       "max_score": 15
     }
   ]

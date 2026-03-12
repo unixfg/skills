@@ -1,1 +1,1 @@
-Fallback from a failed metadata lookup to browsing the fixture library instead of guessing.
+Content search in an adversarial fixture (same sample-library with placeholder files); verify true match using searchable text rather than path/filename inference.

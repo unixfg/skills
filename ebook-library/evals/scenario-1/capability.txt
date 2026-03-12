@@ -1,1 +1,1 @@
-Metadata lookup from title or author clues against the sample Calibre fixture library.
+Identify the correct book from content-based clues in fixture data (avoid title/author path inference).

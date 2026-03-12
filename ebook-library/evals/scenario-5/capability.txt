@@ -1,1 +1,0 @@
-Two-step passage retrieval: first locate a hit, then expand it into a larger excerpt.

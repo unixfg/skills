@@ -1,16 +1,18 @@
-# Identify a book from author and title clues in the sample Calibre library
+# Find a content-only match, not a filename match
 
 Use the bundled sample library at `./sample-library`.
 
+A user asks for the book that discusses the relation between `sense-data` and `physical objects` and explicitly credits `G.E. Moore`.
+
 Goal:
-- identify the Jules Verne book in the fixture library
+- identify the correct book from the fixture library content
 - report the `book_id`, exact title, and author
-- briefly explain how you found the answer
+- include one short evidence snippet from the fixture lookup that supports the answer
 
 Constraints:
-- prefer metadata lookup over global full-text search
-- do not guess; use the fixture library data
+- do not use title/author clues from directory names
+- use library metadata or content lookup in the fixture data
+- avoid guessing
+- clearly state the lookup sequence you used
 
-Expected outcome:
-- the correct book is `Twenty Thousand Leagues under the Sea`
-- the correct author is Jules Verne
+Scoring should depend on the output being evidence-based and not based on file/folder names.

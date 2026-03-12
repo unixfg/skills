@@ -1,1 +1,1 @@
-Book-scoped full-text search within a known title after narrowing to the correct book.
+Honest empty-result handling for content search in the fixture library.
