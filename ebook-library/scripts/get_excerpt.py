@@ -6,13 +6,18 @@ Usage:
   get_excerpt.py --book-id 2525 --around "Abdulla" --chars 800
   get_excerpt.py --book-id 2525 --position 50000 --chars 1000
 """
-import sqlite3
-import json
 import argparse
+import json
 import os
+import sqlite3
 import sys
 
 from calibre_utils import build_excerpt, choose_preferred_format, normalize_format
+
+
+def emit_error(message, code, return_code=2):
+    print(json.dumps({"error": message, "error_code": code}))
+    return return_code
 
 
 def get_excerpt(
@@ -26,36 +31,33 @@ def get_excerpt(
     format_filter=None,
 ):
     if not os.path.exists(fts_db):
-        print(json.dumps({"error": f"FTS DB not found: {fts_db}"}))
-        return 2
+        return emit_error(f"FTS DB not found: {fts_db}", "DB_NOT_FOUND", 2)
     if not os.path.exists(metadata_db):
-        print(json.dumps({"error": f"Metadata DB not found: {metadata_db}"}))
-        return 2
+        return emit_error(f"Metadata DB not found: {metadata_db}", "DB_NOT_FOUND", 2)
     if not around and position is None:
-        print(json.dumps({"error": "Must specify --around or --position"}))
-        return 1
+        return emit_error("Must specify --around or --position", "INVALID_ARGUMENT", 1)
     if occurrence < 1:
-        print(json.dumps({"error": "Occurrence must be at least 1"}))
-        return 1
+        return emit_error("Occurrence must be at least 1", "INVALID_ARGUMENT", 1)
 
     fts_conn = sqlite3.connect(fts_db)
     meta_conn = sqlite3.connect(metadata_db)
 
     try:
-        # Get book metadata
         meta_cur = meta_conn.cursor()
-        meta_cur.execute("""
+        meta_cur.execute(
+            """
             SELECT b.title, group_concat(a.name, ', ')
             FROM books b
             LEFT JOIN books_authors_link bal ON bal.book = b.id
             LEFT JOIN authors a ON a.id = bal.author
             WHERE b.id = ?
             GROUP BY b.id
-        """, (book_id,))
+            """,
+            (book_id,),
+        )
         meta_row = meta_cur.fetchone()
         if not meta_row:
-            print(json.dumps({"error": f"Book {book_id} not found"}))
-            return 1
+            return emit_error(f"Book {book_id} not found", "BOOK_NOT_FOUND", 1)
         title, authors = meta_row
 
         fts_cur = fts_conn.cursor()
@@ -81,15 +83,13 @@ def get_excerpt(
             )
         rows = fts_cur.fetchall()
         if not rows:
-            print(json.dumps({"error": f"No text found for book {book_id}"}))
-            return 1
+            return emit_error(f"No text found for book {book_id}", "BOOK_TEXT_MISSING", 1)
 
         selected_format = choose_preferred_format([row[0] for row in rows], format_filter)
         text = next(searchable_text for fmt, searchable_text in rows if fmt == selected_format)
         text_len = len(text)
 
         if around:
-            # Find the nth occurrence of the keyword
             search_text = text.lower()
             keyword = around.lower()
             pos = -1
@@ -97,18 +97,16 @@ def get_excerpt(
                 pos = search_text.find(keyword, pos + 1)
                 if pos == -1:
                     break
-            
+
             if pos == -1:
-                print(json.dumps({
-                    "error": f"Keyword '{around}' not found in book",
-                    "book_id": book_id,
-                    "title": title
-                }))
-                return 1
+                return emit_error(
+                    f"Keyword '{around}' not found in book",
+                    "KEYWORD_NOT_FOUND",
+                    1,
+                )
         else:
             if position < 0 or position >= text_len:
-                print(json.dumps({"error": f"Position {position} is outside the book text"}))
-                return 1
+                return emit_error(f"Position {position} is outside the book text", "POSITION_OUT_OF_RANGE", 1)
             pos = position
 
         result = {
@@ -118,14 +116,14 @@ def get_excerpt(
             "format": selected_format,
             "position": pos,
             "total_length": text_len,
-            "excerpt": build_excerpt(text, pos, chars)
+            "excerpt": build_excerpt(text, pos, chars),
         }
         print(json.dumps(result, indent=2, ensure_ascii=False))
         return 0
 
     except Exception as e:
-        print(json.dumps({"error": str(e)}))
-        return 3
+        return emit_error(str(e), "EXCERPT_ERROR", 3)
+
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser(description='Get excerpt from a book')

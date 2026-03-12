@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
-import sqlite3
-import json
 import argparse
+import json
 import os
+import sqlite3
 import sys
+
+
+def emit_error(message, code, return_code=2):
+    print(json.dumps({"error": message, "error_code": code}))
+    return return_code
 
 
 def search(db_path, query, limit=50):
     if not os.path.exists(db_path):
-        print(json.dumps({"error": f"DB not found: {db_path}"}))
-        return 2
+        return emit_error(f"DB not found: {db_path}", "DB_NOT_FOUND", 2)
+
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
     q = f"%{query.lower()}%"
     exact = query.lower()
     try:
-        # Simple search on title or author
         sql = (
             "SELECT b.id, b.title, group_concat(a.name, ', ') AS authors "
             "FROM books b LEFT JOIN books_authors_link bal ON bal.book=b.id "
@@ -36,8 +40,8 @@ def search(db_path, query, limit=50):
         print(json.dumps(out, indent=2, ensure_ascii=False))
         return 0
     except Exception as e:
-        print(json.dumps({"error": str(e)}))
-        return 3
+        return emit_error(str(e), "METADATA_QUERY_ERROR", 3)
+
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser(description='Find books by keyword in Calibre metadata')

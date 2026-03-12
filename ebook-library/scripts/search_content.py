@@ -5,13 +5,18 @@ Search book content using Calibre's full-text-search.db.
 Note: Calibre's FTS5 tables use a custom tokenizer that isn't available outside
 Calibre, so we query the underlying books_text table directly with LIKE.
 """
-import sqlite3
-import json
 import argparse
+import json
 import os
+import sqlite3
 import sys
 
 from calibre_utils import build_excerpt, choose_preferred_format, normalize_format
+
+
+def emit_error(message, code, return_code=2):
+    print(json.dumps({"error": message, "error_code": code}))
+    return return_code
 
 
 def _load_book_metadata(meta_conn, book_id):
@@ -36,8 +41,7 @@ def _load_book_metadata(meta_conn, book_id):
 def _search_single_book(fts_conn, meta_conn, book_id, query, limit, context_chars, format_filter):
     metadata = _load_book_metadata(meta_conn, book_id)
     if not metadata:
-        print(json.dumps({"error": f"Book {book_id} not found"}))
-        return 1
+        return emit_error(f"Book {book_id} not found", "BOOK_NOT_FOUND", 1)
 
     fts_cur = fts_conn.cursor()
     if format_filter:
@@ -63,8 +67,7 @@ def _search_single_book(fts_conn, meta_conn, book_id, query, limit, context_char
 
     rows = fts_cur.fetchall()
     if not rows:
-        print(json.dumps({"error": f"No text found for book {book_id}"}))
-        return 1
+        return emit_error(f"No text found for book {book_id}", "BOOK_TEXT_MISSING", 1)
 
     selected_format = choose_preferred_format([row[0] for row in rows], format_filter)
     searchable_text = next(text for fmt, text in rows if fmt == selected_format)
@@ -102,14 +105,11 @@ def search_content(
     format_filter=None,
 ):
     if not os.path.exists(fts_db):
-        print(json.dumps({"error": f"FTS DB not found: {fts_db}"}))
-        return 2
+        return emit_error(f"FTS DB not found: {fts_db}", "DB_NOT_FOUND", 2)
     if not os.path.exists(metadata_db):
-        print(json.dumps({"error": f"Metadata DB not found: {metadata_db}"}))
-        return 2
+        return emit_error(f"Metadata DB not found: {metadata_db}", "DB_NOT_FOUND", 2)
     if not query:
-        print(json.dumps({"error": "Query must not be empty"}))
-        return 1
+        return emit_error("Query must not be empty", "INVALID_ARGUMENT", 1)
 
     fts_conn = sqlite3.connect(fts_db)
     meta_conn = sqlite3.connect(metadata_db)
@@ -130,15 +130,19 @@ def search_content(
         fts_cur = fts_conn.cursor()
 
         if format_filter:
-            fts_cur.execute("""
+            fts_cur.execute(
+                """
                 SELECT book, format, instr(lower(searchable_text), lower(?)) as pos
                 FROM books_text
                 WHERE lower(searchable_text) LIKE lower(?) AND upper(format) = ?
                 ORDER BY book
                 LIMIT ?
-            """, (query, pattern, normalize_format(format_filter), limit * 3))
+                """,
+                (query, pattern, normalize_format(format_filter), limit * 3),
+            )
         else:
-            fts_cur.execute("""
+            fts_cur.execute(
+                """
                 SELECT DISTINCT book, format, instr(lower(searchable_text), lower(?)) as pos
                 FROM books_text
                 WHERE lower(searchable_text) LIKE lower(?)
@@ -153,7 +157,9 @@ def search_content(
                     END,
                     format
                 LIMIT ?
-            """, (query, pattern, limit * 3))
+                """,
+                (query, pattern, limit * 3),
+            )
 
         seen_books = set()
         results = []
@@ -164,37 +170,40 @@ def search_content(
                 continue
             seen_books.add(bid)
 
-            # Get book metadata
             metadata = _load_book_metadata(meta_conn, bid)
             title = metadata["title"] if metadata else f"Book {bid}"
             authors = metadata["authors"] if metadata else None
 
-            # Get context snippet centered on the match
             start = max(1, pos - context_chars // 2)
-            fts_cur.execute("""
+            fts_cur.execute(
+                """
                 SELECT substr(searchable_text, ?, ?)
                 FROM books_text WHERE book = ? AND format = ?
-            """, (start, context_chars, bid, fmt))
+                """,
+                (start, context_chars, bid, fmt),
+            )
             snippet_row = fts_cur.fetchone()
             snippet = snippet_row[0].strip() if snippet_row and snippet_row[0] else ""
-            
-            results.append({
-                "book_id": bid,
-                "title": title,
-                "authors": authors,
-                "format": fmt,
-                "snippet": snippet
-            })
-            
+
+            results.append(
+                {
+                    "book_id": bid,
+                    "title": title,
+                    "authors": authors,
+                    "format": fmt,
+                    "snippet": snippet,
+                }
+            )
+
             if len(results) >= limit:
                 break
-        
+
         print(json.dumps(results, indent=2, ensure_ascii=False))
         return 0
-        
+
     except Exception as e:
-        print(json.dumps({"error": str(e)}))
-        return 3
+        return emit_error(str(e), "SEARCH_ERROR", 3)
+
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser(description='Search book content via Calibre FTS')

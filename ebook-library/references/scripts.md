@@ -9,7 +9,9 @@ These conventions apply to all scripts in `scripts/`:
 - Non-interactive CLI only.
 - Use `--help` (all scripts expose usage text).
 - Machine-readable JSON output on stdout.
-- Structured errors as `{"error": "..."}` on stdout (error code may be implicit from exit status).
+- Structured errors as JSON on stdout, including both:
+  - `"error"`: human-readable message
+  - `"error_code"`: stable machine-readable code (e.g., `BOOK_NOT_FOUND`, `DB_NOT_FOUND`)
 - Exit codes: `0` for success, non-zero for failure.
 
 ## Environment
@@ -97,7 +99,7 @@ python3 scripts/search_content.py \
 
 When scoped to `--book-id`, the script searches one preferred text source and returns multiple occurrences from that book instead of one duplicate row per format.
 
-If there are no matches, it prints `[]`. Invalid `--book-id` values return `{"error": "Book N not found"}`.
+If there are no matches, it prints `[]`. Invalid `--book-id` values return `{"error": "Book N not found", "error_code": "BOOK_NOT_FOUND"}`.
 
 ## 3. `get_excerpt.py` - Pull a longer passage
 
@@ -124,15 +126,15 @@ Options:
 Common failures are JSON objects like:
 
 ```json
-{"error": "Book 4 not found"}
+{"error": "Book 4 not found", "error_code": "BOOK_NOT_FOUND"}
 ```
 
 ```json
-{"error": "No text found for book 4"}
+{"error": "No text found for book 4", "error_code": "BOOK_TEXT_MISSING"}
 ```
 
 ```json
-{"error": "Keyword 'X' not found in book", "book_id": 4, "title": "The Problems of Philosophy"}
+{"error": "Keyword 'X' not found in book", "error_code": "KEYWORD_NOT_FOUND", "book_id": 4, "title": "The Problems of Philosophy"}
 ```
 
 The successful response also includes the chosen `format`.
