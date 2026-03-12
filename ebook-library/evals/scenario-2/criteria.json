@@ -14,7 +14,7 @@
     },
     {
       "name": "supports claim with snippet",
-      "description": "Includes evidence snippet containing both terms (`all that is solid melts into air` and `all that is holy is profaned`), showing the source is real content from the fixture."
+      "description": "Includes evidence snippet containing both terms (`all that is solid melts into air` and `all that is holy is profaned`), showing the source is real content from the fixture.",
       "max_score": 20
     },
     {
