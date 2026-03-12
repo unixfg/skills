@@ -43,19 +43,24 @@ python3 scripts/search_content.py --fts-db "$CALIBRE_FTS_DB" --metadata-db "$CAL
 
 ## Orchestration (preferred flow)
 
-1. For known title/author questions, identify candidates with `find_books.py`.
-2. If multiple candidates, disambiguate before deeper searches.
-3. For phrase/quote tasks:
-   - run scoped search with `--book-id` if you know the book,
-   - otherwise use global content search.
-4. For a returned hit that needs context, call `get_excerpt.py`.
-5. Return results with enough evidence for transparency (book id, title, author, and snippet/path depending on query).
+1. **Environment/checkpoint:** verify the metadata DB path before starting (using your known env vars or discovery). If a path is provided but unreadable, stop and report exactly which path is missing.
+2. **For title/author/topic questions:** run `find_books.py`.
+   - If results are empty, run `inspect_calibre_metadata.py` to confirm DB accessibility and give a short sample set,
+   - then retry with a shorter/partial query before returning no-match.
+3. **For phrase/quote tasks:**
+   - if a candidate `book_id` is already known, run `search_content.py` scoped to that ID,
+   - otherwise run a global `search_content.py`.
+   - If global search returns empty, confirm the search target with `inspect_calibre_metadata.py` and retry with a narrower phrase before reporting no hit.
+4. **For ambiguous/empty candidate discovery:** if `find_books.py` returns multiple plausible titles, fetch short context with additional scoped `search_content.py` searches before selecting one candidate.
+5. **For hit verification:** when a hit is found and needs proof, call `get_excerpt.py` to produce a stable snippet; if this returns an error, re-run a broader quote search in the same source before concluding failure.
+6. **For path resolution:** if `resolve_book.py` returns `exists: false`, verify `book_id` via `find_books.py` (in case of stale IDs), then retry resolution with the known preferred format.
+7. Return results with transparent evidence fields: book id, title, author, method used, and snippet/path depending on query.
 
 ## Result handling
 
 - Empty arrays (`[]`) are valid "no result" responses.
 - `search_content.py`/`get_excerpt.py`/`resolve_book.py` can return structured errors for invalid IDs, missing text, or bad positions.
-- If a `book_id` seems stale, re-run a metadata search before concluding the library is broken.
+- If a `book_id` seems stale, rerun metadata lookup first (`find_books.py` by title/author context), then retry `resolve_book.py` before concluding the library is broken.
 
 ## Boundaries
 
