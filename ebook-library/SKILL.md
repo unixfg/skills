@@ -4,6 +4,10 @@ description: >
   Use this skill when the user asks to search or browse a Calibre ebook library. It helps find books by title/author/topic, locate file paths, and search inside EPUB/AZW3 text for quotes or passages.
 
   Do not use this skill for conversion, metadata editing, downloads, recommendations, or non-Calibre sources.
+compatibility: >
+  Requires filesystem access to a local Calibre library.
+  Metadata search requires `metadata.db`.
+  Content search and excerpts require `full-text-search.db`.
 ---
 
 # Ebook Library Skill
