@@ -3,9 +3,9 @@
 Use the bundled sample library at `./sample-library`.
 
 Goal:
-- identify which book contains the phrase:
+- identify which book contains both phrases:
   - `all that is solid melts into air`
-  - and also includes `bourgeois property`
+  - `all that is holy is profaned`
 - report the `book_id`, exact title, and author
 - include one supporting snippet and briefly explain how you verified it from fixture search data
 
