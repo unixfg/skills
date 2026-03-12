@@ -1,1 +1,1 @@
-Content search in an adversarial fixture (same sample-library with placeholder files); verify true match using searchable text rather than path/filename inference.
+Content search in the sample library; verify the true match using searchable text rather than path/filename inference.

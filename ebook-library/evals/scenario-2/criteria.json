@@ -14,7 +14,7 @@
     },
     {
       "name": "supports claim with snippet",
-      "description": "Includes evidence snippet containing the required terms ('spectre', 'Metternich', 'Czar'), showing the source is real content from the fixture.",
+      "description": "Includes evidence snippet containing the required terms ('all that is solid melts into air', 'bourgeois property'), showing the source is real content from the fixture.",
       "max_score": 20
     },
     {

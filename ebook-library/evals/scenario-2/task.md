@@ -1,11 +1,11 @@
-# Path-trap adversarial test: find the true content match
+# Subtle phrase match in noisy fixtures
 
 Use the bundled sample library at `./sample-library`.
 
 Goal:
 - identify which book contains the phrase:
-  - `A spectre is haunting Europe`
-  - and also mentions `Metternich` and `Czar`
+  - `all that is solid melts into air`
+  - and also includes `bourgeois property`
 - report the `book_id`, exact title, and author
 - include one supporting snippet and briefly explain how you verified it from fixture search data
 
