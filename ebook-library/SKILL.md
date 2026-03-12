@@ -1,145 +1,62 @@
 ---
 name: ebook-library
-description: "Use when the user asks about a Calibre ebook library or book collection: find books, search metadata or full text in EPUB/AZW3 files, or locate book paths via Calibre databases."
+description: >
+  Use this skill when the user asks to search or browse a Calibre ebook library. It helps find books by title/author/topic, locate file paths, and search inside EPUB/AZW3 text for quotes or passages.
+
+  Do not use this skill for conversion, metadata editing, downloads, recommendations, or non-Calibre sources.
 ---
 
-# ebook-library
+# Ebook Library Skill
 
-Use this skill when the user wants to search a Calibre library, find books in an ebook collection, look inside EPUB or AZW3 content, or locate a book file on disk.
+Use this skill when a user wants to look up, search, or resolve books in a local Calibre collection.
 
-Access a Calibre ebook library via read-only SQLite queries.
+This skill is read-only. It can inspect Calibre databases and file paths but does not write to library metadata.
 
-## Database Discovery
+## Environment discovery
 
-Prefer environment variables so commands stay portable:
+1. If you already know the library location:
+   - `CALIBRE_LIBRARY_ROOT`
+   - `CALIBRE_METADATA_DB="$CALIBRE_LIBRARY_ROOT/metadata.db"`
+   - `CALIBRE_FTS_DB="$CALIBRE_LIBRARY_ROOT/full-text-search.db"`
 
-- `CALIBRE_LIBRARY_ROOT` - directory containing the Calibre library
-- `CALIBRE_METADATA_DB` - full path to `metadata.db`
-- `CALIBRE_FTS_DB` - full path to `full-text-search.db`
+2. If unknown, discover DB paths first (`metadata.db`, then `full-text-search.db`).
 
-If you know the library root, derive the DB paths from it:
+## Decision tree
 
-```bash
-export CALIBRE_LIBRARY_ROOT="/path/to/Calibre Library"
-export CALIBRE_METADATA_DB="$CALIBRE_LIBRARY_ROOT/metadata.db"
-export CALIBRE_FTS_DB="$CALIBRE_LIBRARY_ROOT/full-text-search.db"
-```
+- User asks for books by metadata (title, author, topic) → use `find_books.py`.
+- User asks for a quote/passage (global or in one book) → use `search_content.py` (prefer `--book-id` when possible).
+- User asks for nearby context around a hit → use `get_excerpt.py`.
+- User asks for file path → use `resolve_book.py`.
+- User asks to browse when search is vague → use `list_books.py`.
+- User asks for quick sanity checks → use `inspect_calibre_metadata.py`.
 
-If you do not know where the DBs are, locate them first:
-
-```bash
-find "$HOME" -name metadata.db 2>/dev/null
-find "$HOME" -name full-text-search.db 2>/dev/null
-```
-
-`metadata.db` usually lives in the library root. If you only find `metadata.db`, use its parent directory as `CALIBRE_LIBRARY_ROOT`.
-
-## Quick Decision Tree
-
-**"What books do I have about X?"** → `find_books.py --query "X"`
-
-**"I only remember part of the title/author"** → `find_books.py --query "partial phrase"`; if it returns `[]`, fall back to `list_books.py`
-
-**"Find a quote/passage in a specific book"** → `search_content.py --book-id N --query "phrase"`
-
-**"Search all books for a topic"** → `search_content.py --query "topic"` (slower, 10-20s)
-
-**"Get more context around a match"** → `get_excerpt.py --book-id N --around "keyword" --chars 1000`
-
-**"Get the file path to read a book"** → `resolve_book.py --book-id N`
-
-**"Browse titles when search terms are too vague"** → `list_books.py --limit 200`
-
-## Detailed Script Reference
-
-See `references/scripts.md` when you need exact commands, output shapes, fallback behavior, or error cases for a specific script.
-
----
-
-## Common Workflows
-
-### Find a character/quote in a book I know the title of
+### Quick example
 
 ```bash
-# Step 1: Get book ID
-python3 scripts/find_books.py --db-path "$CALIBRE_METADATA_DB" --query "The Problems of Philosophy"
-# → book_id: 4
-
-# Step 2: Search within that book
-python3 scripts/search_content.py \
-  --fts-db "$CALIBRE_FTS_DB" \
-  --metadata-db "$CALIBRE_METADATA_DB" \
-  --book-id 4 \
-  --query "knowledge" \
-  --context 400
+python3 scripts/find_books.py --db-path "$CALIBRE_METADATA_DB" --query "Dune"
+python3 scripts/search_content.py --fts-db "$CALIBRE_FTS_DB" --metadata-db "$CALIBRE_METADATA_DB" --book-id 4 --query "knowledge"
 ```
 
-If step 1 returns multiple books, disambiguate by author before searching content. If it returns `[]`, retry with fewer title words or an author surname, then fall back to `list_books.py`.
+## Orchestration (preferred flow)
 
-If step 2 returns `[]`, widen the phrase, try a more distinctive term, or search across all books if you may have the wrong title.
+1. For known title/author questions, identify candidates with `find_books.py`.
+2. If multiple candidates, disambiguate before deeper searches.
+3. For phrase/quote tasks:
+   - run scoped search with `--book-id` if you know the book,
+   - otherwise use global content search.
+4. For a returned hit that needs context, call `get_excerpt.py`.
+5. Return results with enough evidence for transparency (book id, title, author, and snippet/path depending on query).
 
-### Discover books on a topic
+## Result handling
 
-```bash
-python3 scripts/search_content.py \
-  --fts-db "$CALIBRE_FTS_DB" \
-  --metadata-db "$CALIBRE_METADATA_DB" \
-  --query "machine learning" \
-  --limit 10
-```
+- Empty arrays (`[]`) are valid "no result" responses.
+- `search_content.py`/`get_excerpt.py`/`resolve_book.py` can return structured errors for invalid IDs, missing text, or bad positions.
+- If a `book_id` seems stale, re-run a metadata search before concluding the library is broken.
 
-If this returns `[]`, try a shorter query, search metadata first with `find_books.py`, or ask for a narrower author/title hint before doing another global scan.
+## Boundaries
 
-### Read a book's content
+- Do not infer file conversions or imports from search output.
+- Do not guess book titles/authors when lookup returns no match.
+- Prefer precise scoped searches to reduce unnecessary full-library scans.
 
-```bash
-# Get path
-python3 scripts/resolve_book.py \
-  --metadata-db "$CALIBRE_METADATA_DB" \
-  --library-root "$CALIBRE_LIBRARY_ROOT" \
-  --book-id 4
-
-# Then use ebook-convert or similar to extract text
-```
-
-If the returned format is not what you want, re-run with `--format EPUB` or another value from `available_formats`.
-
-### Get a longer passage after finding a hit
-
-```bash
-# Step 1: Find a match and note the book_id plus a nearby word
-python3 scripts/search_content.py \
-  --fts-db "$CALIBRE_FTS_DB" \
-  --metadata-db "$CALIBRE_METADATA_DB" \
-  --book-id 4 \
-  --query "knowledge"
-
-# Step 2: Pull a larger excerpt around that word
-python3 scripts/get_excerpt.py \
-  --fts-db "$CALIBRE_FTS_DB" \
-  --metadata-db "$CALIBRE_METADATA_DB" \
-  --book-id 4 \
-  --around "knowledge" \
-  --chars 1200
-```
-
-If `get_excerpt.py` says the keyword is not found, copy a nearby word from the snippet or use `--position` with a known character offset.
-
----
-
-## Result Handling
-
-- `find_books.py` returns a JSON array. Empty results are `[]`, not errors.
-- `search_content.py` returns a JSON array for successful searches and a JSON error object for invalid `--book-id`, missing text, or empty queries.
-- `get_excerpt.py` and `resolve_book.py` return JSON objects and use an `"error"` field for invalid book IDs, missing text, bad positions, or missing formats.
-- When a `book_id` fails unexpectedly, re-run `find_books.py` first to confirm the title/author mapping before assuming the content index is wrong.
-- Prefer `--book-id` searches whenever possible. Global content searches have to scan the full-text index and are much slower than metadata lookups or single-book searches.
-
----
-
-## Notes
-
-- **Substring matching:** Searches use LIKE, so a query like "sell" matches author "Bertrand Russell"
-- **Global searches are slower:** They scan the library-wide full-text index, so prefer `--book-id` when the user already knows the title.
-- **Books may have multiple formats:** Prefer `--format` when the user needs a specific edition or when you need excerpts to line up with a particular file.
-- **Read-only workflow:** These scripts query Calibre databases and file paths only; they do not modify the library.
+For exact script arguments, output formats, examples, and error payloads, see `references/scripts.md`.

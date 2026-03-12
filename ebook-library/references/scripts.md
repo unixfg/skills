@@ -2,6 +2,18 @@
 
 Use this file when you need exact CLI syntax, expected output shape, or script-specific failure handling.
 
+## Shared contracts
+
+These conventions apply to all scripts in `scripts/`:
+
+- Non-interactive CLI only.
+- Use `--help` (all scripts expose usage text).
+- Machine-readable JSON output on stdout.
+- Structured errors as `{"error": "..."}` on stdout (error code may be implicit from exit status).
+- Exit codes: `0` for success, non-zero for failure.
+
+## Environment
+
 All scripts are in `scripts/`.
 
 Set these first or substitute explicit paths in each command:
