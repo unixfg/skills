@@ -4,22 +4,22 @@
   "checklist": [
     {
       "name": "no-match search executed",
-      "description": "Performs a fixture content search for the requested term.",
+      "description": "Performs a fixture content search for the exact requested quote in `./sample-library` text content (not filename/path heuristics).",
       "max_score": 35
     },
     {
       "name": "no results reported clearly",
-      "description": "Clearly reports that no matching book was found.",
+      "description": "Explicitly reports the exact quote query and that zero matches were returned.",
       "max_score": 35
     },
     {
       "name": "no fabrication",
-      "description": "Does not invent a title, author, book_id, or excerpt when there are no results.",
+      "description": "Does not invent a title, author, book_id, or excerpt when no results are returned.",
       "max_score": 20
     },
     {
       "name": "brief method note",
-      "description": "Explains which lookup path was used to verify the outcome.",
+      "description": "Explains which fixture lookup path and query were used to verify the outcome.",
       "max_score": 10
     }
   ]
