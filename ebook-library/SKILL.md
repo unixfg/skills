@@ -139,7 +139,7 @@ If `get_excerpt.py` says the keyword is not found, copy a nearby word from the s
 
 ## Notes
 
-- **Substring matching:** Searches use LIKE, so "ramen" matches "Sacramento"
+- **Substring matching:** Searches use LIKE, so a query like "sell" matches author "Bertrand Russell"
 - **Global searches are slower:** They scan the library-wide full-text index, so prefer `--book-id` when the user already knows the title.
 - **Books may have multiple formats:** Prefer `--format` when the user needs a specific edition or when you need excerpts to line up with a particular file.
 - **Read-only workflow:** These scripts query Calibre databases and file paths only; they do not modify the library.
