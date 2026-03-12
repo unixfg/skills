@@ -4,7 +4,7 @@
   "checklist": [
     {
       "name": "uses the fixture search flow",
-      "description": "Uses search_content.py or an equivalent content search against the fixture library rather than answering from prior knowledge.",
+      "description": "Uses the skill's content-search workflow against the fixture library rather than answering from prior knowledge.",
       "max_score": 30
     },
     {

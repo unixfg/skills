@@ -4,7 +4,7 @@
   "checklist": [
     {
       "name": "uses global content search appropriately",
-      "description": "Uses search_content.py without a book_id, or an equivalent global content search flow, because the title is not known up front.",
+      "description": "Uses a global content search flow because the title is not known up front.",
       "max_score": 30
     },
     {

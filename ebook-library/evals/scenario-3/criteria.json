@@ -9,7 +9,7 @@
     },
     {
       "name": "uses scoped search with book id",
-      "description": "Uses a book-scoped search flow, such as finding the book_id first and then using search_content.py with --book-id, rather than relying on an unnecessary global scan.",
+      "description": "Uses a book-scoped search flow once the title is known, rather than relying on an unnecessary global scan.",
       "max_score": 30
     },
     {
@@ -19,7 +19,7 @@
     },
     {
       "name": "explains script usage",
-      "description": "Briefly names the script or scripts used, such as find_books.py and search_content.py.",
+      "description": "Briefly explains the approach used to find the scoped excerpt.",
       "max_score": 15
     }
   ]

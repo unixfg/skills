@@ -9,7 +9,7 @@
     },
     {
       "name": "uses search then excerpt workflow",
-      "description": "Uses search_content.py to find the hit and then get_excerpt.py to pull a larger passage, or otherwise clearly performs the equivalent two-step workflow.",
+      "description": "Uses a two-step workflow: first locate the hit, then pull a larger passage around it.",
       "max_score": 35
     },
     {
@@ -19,7 +19,7 @@
     },
     {
       "name": "brief method explanation",
-      "description": "Briefly explains which scripts were used for the initial hit and the expanded excerpt.",
+      "description": "Briefly explains the approach used for the initial hit and the expanded excerpt.",
       "max_score": 15
     }
   ]

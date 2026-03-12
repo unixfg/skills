@@ -39,6 +39,6 @@ Scenario coverage in this eval set:
 6. path resolution for a preferred readable format
 7. honest no-match handling without hallucination
 
-Each scenario assumes the agent can use the local scripts in `./scripts/` and point them at the sample library via environment variables or explicit flags.
+Each scenario assumes the agent can use the skill's bundled resources and point them at the sample library when needed.
 
 Before running evals, verify the fixture exists and contains working Calibre databases.

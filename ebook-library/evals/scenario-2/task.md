@@ -1,6 +1,6 @@
 # Fall back to browsing when a metadata search fails
 
-Use the fixture library at `./sample-library/` and the local scripts in `./scripts/`.
+Use the bundled sample library at `./sample-library`.
 
 A user says they want the sea adventure novel in the fixture library, but a first metadata lookup using the phrase `ocean depths` returns no matches.
 
@@ -13,7 +13,7 @@ Goal:
 
 Constraints:
 - start with metadata lookup
-- if the first lookup returns `[]`, use `list_books.py` to inspect available titles
+- if the first lookup returns `[]`, inspect available titles before choosing an answer
 - do not use broad global content search for this task
 
 Expected outcome:

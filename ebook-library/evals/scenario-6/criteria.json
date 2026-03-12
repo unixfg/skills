@@ -13,8 +13,8 @@
       "max_score": 20
     },
     {
-      "name": "uses resolve_book.py and prefers epub",
-      "description": "Uses resolve_book.py to obtain a concrete filesystem path and prefers EPUB if it is available, rather than constructing the path manually.",
+      "name": "uses path-resolution workflow and prefers epub",
+      "description": "Uses the skill's path-resolution workflow to obtain a concrete filesystem path and prefers EPUB if it is available, rather than constructing the path manually.",
       "max_score": 35
     },
     {

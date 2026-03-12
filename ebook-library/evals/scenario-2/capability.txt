@@ -1,1 +1,1 @@
-Fallback from failed metadata search to browsing the fixture library with list_books.py instead of guessing.
+Fallback from a failed metadata lookup to browsing the fixture library instead of guessing.

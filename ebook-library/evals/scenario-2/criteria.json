@@ -8,8 +8,8 @@
       "max_score": 20
     },
     {
-      "name": "uses list_books.py as fallback",
-      "description": "Uses list_books.py or an equivalent metadata browsing step after the failed lookup, rather than guessing or switching immediately to an unnecessary global content search.",
+      "name": "uses metadata browsing as fallback",
+      "description": "Uses a metadata browsing fallback after the failed lookup, rather than guessing or switching immediately to an unnecessary global content search.",
       "max_score": 30
     },
     {

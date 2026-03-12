@@ -1,6 +1,6 @@
 # Find an excerpt from a known book in the sample Calibre library
 
-Use the fixture library at `./sample-library/` and the local scripts in `./scripts/`.
+Use the bundled sample library at `./sample-library`.
 
 Goal:
 - locate `Twenty Thousand Leagues under the Sea` by Jules Verne
@@ -9,7 +9,7 @@ Goal:
   - the `book_id`
   - the book title
   - a short excerpt that includes the term `Leyden`
-  - a brief note on which script(s) you used
+  - a brief note on how you found it
 
 Constraints:
 - prefer narrowing to the correct `book_id` first, then search within that book

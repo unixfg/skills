@@ -1,1 +1,1 @@
-Metadata lookup by title or author clues using find_books.py against the sample Calibre fixture library.
+Metadata lookup from title or author clues against the sample Calibre fixture library.

@@ -14,7 +14,7 @@
     },
     {
       "name": "uses metadata-first workflow",
-      "description": "Uses an appropriate metadata lookup flow such as find_books.py or list_books.py, instead of starting with a broad global content search.",
+      "description": "Uses an appropriate metadata-first lookup flow instead of starting with a broad global content search.",
       "max_score": 30
     },
     {

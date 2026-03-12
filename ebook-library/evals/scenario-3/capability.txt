@@ -1,1 +1,1 @@
-Book-scoped full-text search within a known title using find_books.py plus search_content.py with --book-id.
+Book-scoped full-text search within a known title after narrowing to the correct book.

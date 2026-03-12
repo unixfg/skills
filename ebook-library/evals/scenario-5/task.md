@@ -1,6 +1,6 @@
 # Expand a match into a longer passage in a known book
 
-Use the fixture library at `./sample-library/` and the local scripts in `./scripts/`.
+Use the bundled sample library at `./sample-library`.
 
 Goal:
 - locate `Twenty Thousand Leagues under the Sea` by Jules Verne
@@ -10,9 +10,9 @@ Goal:
   - the `book_id`
   - the book title
   - a longer excerpt centered on the match
-  - a brief note on which scripts you used
+  - a brief note on how you found it
 
 Constraints:
 - prefer finding the correct `book_id` first
 - use a two-step workflow: identify a hit, then expand it
-- use `get_excerpt.py` for the longer passage rather than returning only the initial search snippet
+- use the skill's excerpt-expansion workflow rather than returning only the initial search snippet
