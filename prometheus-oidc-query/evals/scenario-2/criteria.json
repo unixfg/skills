@@ -9,7 +9,7 @@
     },
     {
       "name": "attributes failure to token acquisition",
-      "description": "Correctly distinguishes token endpoint problems from Prometheus query problems based on `error_code`, HTTP status, and command context.",
+      "description": "Correctly distinguishes token endpoint problems from Prometheus query problems.",
       "max_score": 30
     },
     {

@@ -9,7 +9,7 @@
     },
     {
       "name": "uses prom_query query command",
-      "description": "Runs `python3 scripts/prom_query.py query --expr 'up'` (or equivalent with only the `--expr` value changed), and includes the resulting JSON command output fields.",
+      "description": "Runs `python3 scripts/prom_query.py query --expr 'up'` (or equivalent with only the `--expr` value changed).",
       "max_score": 35
     },
     {
