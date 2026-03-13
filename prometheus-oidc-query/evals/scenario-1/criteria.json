@@ -4,12 +4,12 @@
   "checklist": [
     {
       "name": "validates configuration first",
-      "description": "Runs `python3 scripts/check_config.py` and shows `valid` before attempting `query`.",
+      "description": "Runs configuration validation (e.g., `python3 scripts/check_config.py` or `python3 scripts/prom_query.py config`) and inspects the `valid` field before any query attempt. Flexible on the exact script path as long as the bundled validation is used.",
       "max_score": 25
     },
     {
       "name": "uses prom_query query command",
-      "description": "Uses `python3 scripts/prom_query.py query --expr 'up'` when configuration is valid. If `check_config.py` reports `valid: false`, explicitly explain the block and avoid attempting the query.",
+      "description": "Uses the bundled query command (e.g., `python3 scripts/prom_query.py query --expr 'up'`) when configuration is valid. Flexible on the exact script path. If configuration is invalid, explicitly explain the block and avoid attempting the query.",
       "max_score": 35
     },
     {
