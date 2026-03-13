@@ -1,6 +1,6 @@
 {
   "name": "jobe-skills/prometheus-oidc-query",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": false,
   "summary": "Run PromQL queries, inspect alert state, and troubleshoot OAuth2 or OIDC client-credentials access to Prometheus-compatible APIs.",
   "docs": "docs/index.md",
