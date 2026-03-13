@@ -9,7 +9,7 @@
     },
     {
       "name": "uses prom_query query command",
-      "description": "Runs `python3 scripts/prom_query.py query --expr 'up'` (or equivalent with only the `--expr` value changed).",
+      "description": "Uses `python3 scripts/prom_query.py query --expr 'up'` when configuration is valid. If `check_config.py` reports `valid: false`, explicitly explain the block and avoid attempting the query.",
       "max_score": 35
     },
     {
