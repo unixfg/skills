@@ -1,10 +1,10 @@
 ---
 name: prometheus-oidc-query
 description: >
-  Use when the user asks for Prometheus metrics, monitoring data, Grafana/PromQL queries,
-  or alert checks in an OAuth2/OIDC-protected Prometheus-compatible API. Validate
-  the local environment first, then run the helper commands for queries, alerts,
-  token checks, and config inspection.
+  Use when the user asks for Prometheus metrics, monitoring data, or Grafana/PromQL
+  query support on an OAuth2/OIDC-protected Prometheus-compatible endpoint. This skill
+  helps run `prom_query.py` instant queries, inspect `ALERTS` states, refresh/check OAuth2
+  tokens, and validate query/config prerequisites before making network calls.
 compatibility: >
   Requires outbound access to a Prometheus-compatible HTTP API and the token endpoint.
   This skill is read-only and does not modify cluster, token, or metric data.
@@ -18,12 +18,13 @@ an OAuth2/OIDC-protected Prometheus-compatible endpoint.
 ## Workflow
 
 1. Validate configuration with `python3 scripts/check_config.py` (or `python3 scripts/prom_query.py config`).
-2. If configuration is invalid, report concrete missing/malformed values and stop.
-3. If valid, run:
+2. If configuration is invalid, report concrete missing/malformed values and stop; do not invent values.
+3. If valid, run the exact helper needed for the user intent:
    - `python3 scripts/prom_query.py query --expr '<promql>'` for instant queries.
    - `python3 scripts/prom_query.py alerts --state firing|pending|inactive` for alert-state checks.
-4. Use `python3 scripts/prom_query.py token --refresh` only when token troubleshooting is needed.
-5. Return concise results with explicit evidence (query used, auth source, endpoint response fields).
+   - `python3 scripts/prom_query.py token --refresh` for fresh token inspection/debugging.
+4. Return results using values from script output (for example `query`, `state`, `auth_source`, and `response`).
+5. Never suggest custom query paths like raw `curl` calls unless scripts are unavailable and the user explicitly asks for a workaround.
 
 ## Environment
 
@@ -51,11 +52,11 @@ Optional:
 ## Orchestration (preferred flow)
 
 1. **Preflight:** run `python3 scripts/check_config.py` and capture `valid` + `errors`.
-   - If invalid, explain exactly which values are missing/malformed and do not make network calls.
+   - If `valid` is `false`, report the exact `errors` list and do not make any network calls.
 2. **Query path:** call `query` only after preflight success.
-   - Report query used in output (`query` field).
-3. **No-match/empty result handling:** report empty `response.result` honestly; do not infer metrics.
-4. **Token behavior:** if auth source is `token_endpoint` in first run or cache misses, mention that and suggest cache/state checks.
+   - Report query used in output (`query` field) and token origin (`auth_source`).
+3. **No-match/empty result handling:** report empty `response.result` honestly; do not infer metrics or invent values.
+4. **Token behavior:** if auth source is `token_endpoint` in first run or cache misses, mention that and recommend `python3 scripts/prom_query.py token` checks.
 5. **Retry/fallback:**
    - If receiving token errors, retry with `python3 scripts/prom_query.py token --refresh` after confirming credentials.
    - If Prometheus API returns errors, call out endpoint and response body before advising config fixes.

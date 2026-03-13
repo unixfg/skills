@@ -8,5 +8,8 @@ Goal:
 - avoid making any network request if the configuration is already invalid
 
 Constraints:
-- rely on the local validation/reporting commands
-- never echo secrets back to the user
+- run `python3 scripts/check_config.py` first and report the full `errors` list or `valid: true`.
+- rely on the local validation/reporting commands.
+- never echo secrets back to the user.
+
+Validate environment-driven Prometheus and OAuth2 configuration before making network requests.

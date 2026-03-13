@@ -4,12 +4,12 @@
   "checklist": [
     {
       "name": "validates configuration first",
-      "description": "Runs or references `check_config.py` or the `config` subcommand before the query when configuration state is unknown.",
+      "description": "Runs `python3 scripts/check_config.py` and shows `valid` before attempting `query`.",
       "max_score": 25
     },
     {
       "name": "uses prom_query query command",
-      "description": "Uses `python3 scripts/prom_query.py query --expr 'up'` or an equivalent concrete command based on the bundled script.",
+      "description": "Runs `python3 scripts/prom_query.py query --expr 'up'` (or equivalent with only the `--expr` value changed), and includes the resulting JSON command output fields.",
       "max_score": 35
     },
     {
@@ -19,7 +19,7 @@
     },
     {
       "name": "explains auth source",
-      "description": "Explains whether authentication came from cache or from a fresh token fetch using the script output.",
+      "description": "Explains the returned `auth_source` value explicitly (`cache` vs `token_endpoint`) and ties it to token behavior.",
       "max_score": 20
     }
   ]

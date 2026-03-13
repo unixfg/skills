@@ -4,22 +4,22 @@
   "checklist": [
     {
       "name": "starts with validation tooling",
-      "description": "Uses `check_config.py` or `prom_query.py config` before deeper debugging.",
+      "description": "Runs or references `python3 scripts/check_config.py` (or `python3 scripts/prom_query.py config`) before deeper debugging.",
       "max_score": 30
     },
     {
       "name": "attributes failure to token acquisition",
-      "description": "Correctly distinguishes token endpoint problems from Prometheus query problems.",
+      "description": "Correctly distinguishes token endpoint problems from Prometheus query problems based on `error_code`, HTTP status, and command context.",
       "max_score": 30
     },
     {
       "name": "recommends a confirming command",
-      "description": "Suggests a concrete next command such as `python3 scripts/prom_query.py token --refresh` or `python3 scripts/check_config.py`.",
+      "description": "Recommends a concrete command such as `python3 scripts/prom_query.py token --refresh` or `python3 scripts/check_config.py`.",
       "max_score": 20
     },
     {
       "name": "avoids tool-maintainer framing",
-      "description": "Keeps the response focused on operating the helper skill rather than rebuilding a custom CLI.",
+      "description": "Keeps the response focused on operating the helper scripts instead of discussing script rewrites.",
       "max_score": 20
     }
   ]

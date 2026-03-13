@@ -4,17 +4,17 @@
   "checklist": [
     {
       "name": "uses local validation path",
-      "description": "Runs or references `python3 scripts/check_config.py` or `python3 scripts/prom_query.py config`.",
+      "description": "Runs or references `python3 scripts/check_config.py` / `python3 scripts/prom_query.py config` as the first step.",
       "max_score": 35
     },
     {
       "name": "reports concrete validation errors",
-      "description": "Identifies missing required variables or malformed URLs instead of guessing.",
+      "description": "Reports specific missing required values or malformed URLs from `errors` and does not guess them.",
       "max_score": 35
     },
     {
       "name": "avoids premature network calls",
-      "description": "Does not recommend firing a live query before configuration is valid.",
+      "description": "Does not recommend or execute `query` when validation indicates invalid configuration.",
       "max_score": 20
     },
     {

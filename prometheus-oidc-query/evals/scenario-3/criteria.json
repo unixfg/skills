@@ -4,17 +4,17 @@
   "checklist": [
     {
       "name": "uses alerts subcommand",
-      "description": "Uses `python3 scripts/prom_query.py alerts --state pending` or an equivalent command from the bundled script.",
+      "description": "Uses `python3 scripts/prom_query.py alerts --state pending` (or equivalent requested state) from the bundled script.",
       "max_score": 40
     },
     {
       "name": "states the generated promql",
-      "description": "Explains that the generated PromQL expression is `ALERTS{alertstate=\"pending\"}`.",
+      "description": "Explains the generated PromQL expression is `ALERTS{alertstate=\"pending\"}` and shows it in output if present.",
       "max_score": 30
     },
     {
       "name": "describes wrapper behavior",
-      "description": "Notes that the alerts helper is a convenience wrapper around the same Prometheus query endpoint.",
+      "description": "Notes that alerts is a convenience wrapper around the same Prometheus `/api/v1/query` endpoint used by `query`.",
       "max_score": 30
     }
   ]

@@ -8,6 +8,9 @@ Goal:
 - explain whether authentication came from cache or from the token endpoint
 
 Constraints:
-- use the bundled scripts in `./scripts/`
-- do not invent default URLs, client IDs, or secrets
-- explain the concrete command used
+- run `python3 scripts/check_config.py` and inspect `valid` before any live query.
+- use only bundled scripts in `./scripts/`.
+- do not invent default URLs, client IDs, or secrets.
+- include concrete command lines and the exact fields returned by the script (`query`, `auth_source`, `response`).
+
+Run a standard PromQL instant query with the bundled helper script and explain token-cache behavior.
