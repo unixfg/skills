@@ -12,6 +12,6 @@ Constraints:
 - use only bundled scripts in `./scripts/`.
 - do not invent default URLs, client IDs, or secrets.
 - include the concrete command used when possible.
-- if configuration is invalid, report what is missing and do not attempt the query.
+- if configuration is invalid, report what is missing and do not attempt the query; also state that auth_source is not determinable until a successful query.
 
 Run a standard PromQL instant query with the bundled helper script and explain token-cache behavior.

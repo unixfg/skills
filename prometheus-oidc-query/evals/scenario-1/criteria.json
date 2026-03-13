@@ -19,7 +19,7 @@
     },
     {
       "name": "explains auth source",
-      "description": "Explains the returned `auth_source` value explicitly (`cache` vs `token_endpoint`) and ties it to token behavior.",
+      "description": "If query runs, explicitly reports `auth_source` (`cache` or `token_endpoint`). If preflight is invalid and query is intentionally skipped, it must still explain that token source cannot be determined yet and how to validate it once config is valid.",
       "max_score": 20
     }
   ]
