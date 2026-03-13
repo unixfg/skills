@@ -1,25 +1,33 @@
 ---
 name: prometheus-oidc-query
-description: "Run PromQL queries, inspect alert state, validate OAuth2 or OIDC client-credentials configuration, or troubleshoot bearer-token access to Prometheus-compatible APIs. Use when the user needs to query Prometheus through a token endpoint, check whether auth or TLS settings are correct, or inspect alert state without rebuilding a custom CLI."
+description: >
+  Use when the user asks for Prometheus metrics, monitoring data, Grafana/PromQL queries,
+  or alert checks in an OAuth2/OIDC-protected Prometheus-compatible API. Validate
+  the local environment first, then run the helper commands for queries, alerts,
+  token checks, and config inspection.
+compatibility: >
+  Requires outbound access to a Prometheus-compatible HTTP API and the token endpoint.
+  This skill is read-only and does not modify cluster, token, or metric data.
 ---
 
 # prometheus-oidc-query
 
-Use the bundled Python scripts instead of re-implementing token handling or Prometheus HTTP requests.
+Use this skill when a user asks to query Prometheus or inspect alert state through
+an OAuth2/OIDC-protected Prometheus-compatible endpoint.
 
 ## Workflow
 
-1. Run `python3 scripts/check_config.py` when the user may have missing or malformed environment variables.
-2. Run `python3 scripts/prom_query.py config` to inspect the redacted effective configuration.
-3. Run `python3 scripts/prom_query.py query --expr '<promql>'` for instant PromQL queries.
-4. Run `python3 scripts/prom_query.py alerts --state firing|pending|inactive` to inspect alert state.
-5. Run `python3 scripts/prom_query.py token --refresh` only when debugging token acquisition or cache issues.
+1. Validate configuration with `python3 scripts/check_config.py` (or `python3 scripts/prom_query.py config`).
+2. If configuration is invalid, report concrete missing/malformed values and stop.
+3. If valid, run:
+   - `python3 scripts/prom_query.py query --expr '<promql>'` for instant queries.
+   - `python3 scripts/prom_query.py alerts --state firing|pending|inactive` for alert-state checks.
+4. Use `python3 scripts/prom_query.py token --refresh` only when token troubleshooting is needed.
+5. Return concise results with explicit evidence (query used, auth source, endpoint response fields).
 
-Read [docs/index.md](docs/index.md) when you need setup examples, configuration reference, or troubleshooting details.
+## Environment
 
-## Configuration
-
-Set these environment variables before querying:
+Required:
 
 - `PROM_QUERY_PROMETHEUS_URL`
 - `PROM_QUERY_TOKEN_URL`
@@ -30,20 +38,33 @@ Optional:
 
 - `PROM_QUERY_SCOPE`
 - `PROM_QUERY_CA_BUNDLE`
-- `PROM_QUERY_TIMEOUT`
+- `PROM_QUERY_TIMEOUT` (seconds)
 
-## Result Handling
+## Decision tree
 
-- `query` prints a JSON object with the submitted expression and the Prometheus API response body.
-- `alerts` prints a JSON object with the alert state, generated expression, and the Prometheus API response body.
-- `config` prints a redacted configuration and validation report.
-- `token` prints cache and expiry metadata without exposing the raw token.
-- `check_config.py` prints a validation report and exits non-zero when the required configuration is incomplete or invalid.
+- User needs token validation/troubleshooting only → run `config`/`token` first.
+- User asks for a direct PromQL expression → use `query` with that expression.
+- User asks about alert state or mentions `ALERTS` → use `alerts` subcommand.
+- User needs environment readiness before any live call → start with `check_config.py`.
+- User asks for examples / setup details → use `docs/index.md`.
 
-## Operating Rules
+## Orchestration (preferred flow)
 
-- Prefer `check_config.py` before deeper debugging when the user does not know which variable is wrong.
-- Treat URLs, client IDs, scopes, and secrets as user-provided inputs. Do not invent environment-specific defaults.
-- Never echo the raw client secret or access token.
-- Distinguish token acquisition failures from Prometheus API failures in the explanation.
-- Treat `alerts` as a convenience wrapper around `ALERTS{alertstate="<state>"}`.
+1. **Preflight:** run `python3 scripts/check_config.py` and capture `valid` + `errors`.
+   - If invalid, explain exactly which values are missing/malformed and do not make network calls.
+2. **Query path:** call `query` only after preflight success.
+   - Report query used in output (`query` field).
+3. **No-match/empty result handling:** report empty `response.result` honestly; do not infer metrics.
+4. **Token behavior:** if auth source is `token_endpoint` in first run or cache misses, mention that and suggest cache/state checks.
+5. **Retry/fallback:**
+   - If receiving token errors, retry with `python3 scripts/prom_query.py token --refresh` after confirming credentials.
+   - If Prometheus API returns errors, call out endpoint and response body before advising config fixes.
+
+## Result handling
+
+- Keep secrets redacted (`client_secret` and raw tokens are not printed).
+- Scripts return machine-readable JSON payloads.
+- On script failures, return `{ "error": ..., "error_code": ... }` with non-zero exit code.
+- For command reference and exact payload fields, see `references/scripts.md`.
+
+For exact command syntax, output structures, and error codes, use `references/scripts.md`.

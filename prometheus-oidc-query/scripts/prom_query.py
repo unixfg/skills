@@ -21,11 +21,19 @@ DEFAULT_TIMEOUT_SECONDS = 30.0
 REFRESH_SKEW_SECONDS = 60
 
 
-class ConfigError(Exception):
+class ScriptError(Exception):
+    """Raised when the script cannot continue and should fail with an error payload."""
+
+    def __init__(self, message: str, *, error_code: str):
+        super().__init__(message)
+        self.error_code = error_code
+
+
+class ConfigError(ScriptError):
     """Raised when configuration is incomplete or invalid."""
 
 
-class HttpRequestError(Exception):
+class HttpRequestError(ScriptError):
     """Raised when an HTTP request fails."""
 
 
@@ -51,10 +59,16 @@ def load_settings() -> Settings:
     try:
         timeout = float(timeout_text)
     except ValueError as exc:
-        raise ConfigError("PROM_QUERY_TIMEOUT must be a number") from exc
+        raise ConfigError(
+            "PROM_QUERY_TIMEOUT must be a number",
+            error_code="INVALID_TIMEOUT",
+        ) from exc
 
     if timeout <= 0:
-        raise ConfigError("PROM_QUERY_TIMEOUT must be greater than zero")
+        raise ConfigError(
+            "PROM_QUERY_TIMEOUT must be greater than zero",
+            error_code="INVALID_TIMEOUT",
+        )
 
     return Settings(
         prometheus_url=os.environ.get("PROM_QUERY_PROMETHEUS_URL"),
@@ -131,7 +145,7 @@ def ensure_valid_settings(settings: Settings) -> None:
     report = build_validation_report(settings)
     if report["valid"]:
         return
-    raise ConfigError("; ".join(report["errors"]))
+    raise ConfigError("; ".join(report["errors"]), error_code="INVALID_CONFIG")
 
 
 def build_ssl_context(settings: Settings) -> ssl.SSLContext:
@@ -145,12 +159,19 @@ def print_json(payload: dict[str, Any]) -> None:
     sys.stdout.write("\n")
 
 
+def print_error(message: str, *, code: str) -> None:
+    print_json({"error": message, "error_code": code})
+
+
 def read_json_response(response: Any) -> dict[str, Any]:
     raw = response.read().decode("utf-8")
     try:
         return json.loads(raw)
     except json.JSONDecodeError as exc:
-        raise HttpRequestError("received a non-JSON response") from exc
+        raise HttpRequestError(
+            "received a non-JSON response",
+            error_code="INVALID_JSON_RESPONSE",
+        ) from exc
 
 
 def request_json(
@@ -161,6 +182,7 @@ def request_json(
     context: ssl.SSLContext,
     headers: dict[str, str] | None = None,
     form: dict[str, str] | None = None,
+    error_code: str,
 ) -> dict[str, Any]:
     encoded_form = None
     request_headers = dict(headers or {})
@@ -178,9 +200,9 @@ def request_json(
         message = f"{method} {url} failed with HTTP {exc.code}"
         if body:
             message = f"{message}: {body}"
-        raise HttpRequestError(message) from exc
+        raise HttpRequestError(message, error_code=error_code) from exc
     except error.URLError as exc:
-        raise HttpRequestError(f"{method} {url} failed: {exc.reason}") from exc
+        raise HttpRequestError(f"{method} {url} failed: {exc.reason}", error_code=error_code) from exc
 
 
 def read_cached_token(path: Path) -> dict[str, Any] | None:
@@ -226,6 +248,7 @@ def fetch_access_token(settings: Settings, context: ssl.SSLContext) -> dict[str,
         timeout=settings.timeout,
         context=context,
         form=form,
+        error_code="TOKEN_REQUEST_FAILED",
     )
 
     access_token = token_response.get("access_token")
@@ -234,12 +257,18 @@ def fetch_access_token(settings: Settings, context: ssl.SSLContext) -> dict[str,
     scope = token_response.get("scope", settings.scope)
 
     if not isinstance(access_token, str) or not access_token:
-        raise HttpRequestError("token endpoint response did not include access_token")
+        raise HttpRequestError(
+            "token endpoint response did not include access_token",
+            error_code="TOKEN_RESPONSE_INVALID",
+        )
 
     try:
         expires_in_seconds = int(expires_in)
     except (TypeError, ValueError) as exc:
-        raise HttpRequestError("token endpoint response included an invalid expires_in") from exc
+        raise HttpRequestError(
+            "token endpoint response included an invalid expires_in",
+            error_code="TOKEN_RESPONSE_INVALID",
+        ) from exc
 
     payload = {
         "access_token": access_token,
@@ -290,6 +319,7 @@ def perform_query(settings: Settings, context: ssl.SSLContext, expression: str) 
             "Accept": "application/json",
             "Authorization": f"Bearer {token_payload['access_token']}",
         },
+        error_code="PROMETHEUS_REQUEST_FAILED",
     )
     return {
         "auth_source": source,
@@ -343,7 +373,8 @@ def run_command(args: argparse.Namespace, settings: Settings) -> dict[str, Any]:
     if args.command == "token":
         source, token_payload = get_access_token(settings, context, force_refresh=args.refresh)
         return token_metadata(source, token_payload, settings)
-    raise ConfigError(f"unknown command: {args.command}")
+
+    raise ScriptError(f"unknown command: {args.command}", error_code="INVALID_COMMAND")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -353,8 +384,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         settings = load_settings()
         payload = run_command(args, settings)
-    except (ConfigError, HttpRequestError) as exc:
-        print(str(exc), file=sys.stderr)
+    except ScriptError as exc:
+        print_error(str(exc), code=getattr(exc, "error_code", "SCRIPT_ERROR"))
         return 1
 
     print_json(payload)

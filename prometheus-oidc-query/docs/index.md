@@ -119,3 +119,8 @@ This tile replaces the old internal `prom-fetcher` package. It intentionally rem
 - machine-specific secret paths
 - Keycloak- or proxy-specific defaults
 - `PROM_FETCHER_*` environment naming
+
+
+## Command Contracts
+
+For exact arguments, output schema, and error codes, see [references/scripts.md](../references/scripts.md).

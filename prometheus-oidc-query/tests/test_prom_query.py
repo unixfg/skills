@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+import os
 import tempfile
 import time
 import unittest
@@ -54,6 +55,16 @@ class PromQueryTests(unittest.TestCase):
         self.assertIn("PROM_QUERY_TOKEN_URL is required", report["errors"])
         self.assertIn("PROM_QUERY_CLIENT_ID is required", report["errors"])
         self.assertIn("PROM_QUERY_CLIENT_SECRET is required", report["errors"])
+
+
+    def test_load_settings_rejects_invalid_timeout(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with unittest.mock.patch.dict(os.environ, {"PROM_QUERY_TIMEOUT": "not-a-number"}):
+                with self.assertRaises(prom_query.ConfigError) as ctx:
+                    prom_query.load_settings()
+
+        self.assertEqual(ctx.exception.error_code, "INVALID_TIMEOUT")
+        self.assertIn("must be a number", str(ctx.exception))
 
     def test_read_cached_token_ignores_expiring_tokens(self):
         with tempfile.TemporaryDirectory() as temp_dir:

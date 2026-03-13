@@ -5,15 +5,16 @@ from __future__ import annotations
 
 import sys
 
-from prom_query import ConfigError, build_validation_report, load_settings, print_json
+from prom_query import print_json
+from prom_query import ScriptError, build_validation_report, load_settings
 
 
 def main() -> int:
     try:
         settings = load_settings()
         report = build_validation_report(settings)
-    except ConfigError as exc:
-        print(str(exc), file=sys.stderr)
+    except ScriptError as exc:
+        print_json({"error": str(exc), "error_code": exc.error_code})
         return 1
 
     print_json(report)
