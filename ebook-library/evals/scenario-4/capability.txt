@@ -1,0 +1,1 @@
+Use Calibre metadata to identify the correct book and resolve a real ebook file path without guessing from directory names.

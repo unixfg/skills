@@ -1,0 +1,26 @@
+{
+  "context": "This scenario checks that the agent can use Calibre metadata to locate the correct book record and resolve a real file path, instead of inventing or guessing from directory names.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "correct book identified",
+      "description": "Reports the exact title 'The Problems of Philosophy', author 'Bertrand Russell', and book_id 4 from the library.",
+      "max_score": 30
+    },
+    {
+      "name": "metadata-first discovery",
+      "description": "Uses library metadata lookup to find the book before resolving the file path, rather than guessing from folder structure.",
+      "max_score": 25
+    },
+    {
+      "name": "real epub path resolved",
+      "description": "Returns a real resolved EPUB path from the Calibre library, or honestly reports available formats if EPUB is unavailable.",
+      "max_score": 30
+    },
+    {
+      "name": "method explanation",
+      "description": "Briefly explains the lookup sequence used (metadata lookup then path resolution) and stays consistent with the returned evidence.",
+      "max_score": 15
+    }
+  ]
+}
