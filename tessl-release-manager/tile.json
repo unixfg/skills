@@ -1,0 +1,11 @@
+{
+  "name": "jobe-skills/tessl-release-manager",
+  "version": "0.1.0",
+  "private": true,
+  "summary": "Manage the lifecycle of Tessl skills and tiles stored in a git repository. Use when creating, refining, evaluating, versioning, tagging, publishing, validating, or troubleshooting Tessl-managed skills across a repository. Covers when to bump versions, when to create release tags, when a new eval is warranted, how to verify publish state, and how to keep repository changes, Tessl registry state, and GitHub workflows aligned.\n",
+  "skills": {
+    "tessl-release-manager": {
+      "path": "SKILL.md"
+    }
+  }
+}
