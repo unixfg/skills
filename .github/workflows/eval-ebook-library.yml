@@ -34,8 +34,8 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     env:
-      TESSL_API_TOKEN: ${{ vars.TESSL_API_TOKEN || secrets.TESSL_API_TOKEN }}
-      TESSL_TOKEN: ${{ vars.TESSL_API_TOKEN || secrets.TESSL_API_TOKEN }}
+      TESSL_API_TOKEN: ${{ secrets.TESSL_API_TOKEN || vars.TESSL_API_TOKEN }}
+      TESSL_TOKEN: ${{ secrets.TESSL_API_TOKEN || vars.TESSL_API_TOKEN }}
       TESSL_WORKSPACE: jobe-skills
       DEFAULT_EVAL_AGENT: claude:claude-haiku-4-5
     steps:
