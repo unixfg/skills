@@ -34,7 +34,8 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     env:
-      TESSL_API_TOKEN: ${{ secrets.TESSL_API_TOKEN }}
+      TESSL_API_TOKEN: ${{ vars.TESSL_API_TOKEN || secrets.TESSL_API_TOKEN }}
+      TESSL_TOKEN: ${{ vars.TESSL_API_TOKEN || secrets.TESSL_API_TOKEN }}
       TESSL_WORKSPACE: jobe-skills
       DEFAULT_EVAL_AGENT: claude:claude-haiku-4-5
     steps:
@@ -71,6 +72,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+
+      - name: Verify Tessl auth
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes tessl@latest whoami
 
       - name: Run tile evals
         id: run_evals
