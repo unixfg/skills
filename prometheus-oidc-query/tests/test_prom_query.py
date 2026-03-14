@@ -14,6 +14,8 @@ SCRIPT_PATH = (
     Path(__file__).resolve().parents[1] / "scripts" / "prom_query.py"
 )
 SPEC = importlib.util.spec_from_file_location("prom_query", SCRIPT_PATH)
+if SPEC is None:
+    raise ImportError(f"Could not load spec for {SCRIPT_PATH}")
 prom_query = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 sys.modules[SPEC.name] = prom_query
@@ -59,7 +61,7 @@ class PromQueryTests(unittest.TestCase):
 
     def test_load_settings_rejects_invalid_timeout(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            with unittest.mock.patch.dict(os.environ, {"PROM_QUERY_TIMEOUT": "not-a-number"}):
+            with mock.patch.dict(os.environ, {"PROM_QUERY_TIMEOUT": "not-a-number"}):
                 with self.assertRaises(prom_query.ConfigError) as ctx:
                     prom_query.load_settings()
 

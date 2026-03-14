@@ -4,7 +4,7 @@
   "checklist": [
     {
       "name": "no-match search executed",
-      "description": "Performs a fixture content search for the exact requested quote in `./sample-library` text content (not filename/path heuristics).",
+      "description": "Performs a library content search for the exact requested quote in `./sample-library` text content (not filename/path heuristics).",
       "max_score": 35
     },
     {
@@ -19,7 +19,7 @@
     },
     {
       "name": "brief method note",
-      "description": "Explains which fixture lookup path and query were used to verify the outcome.",
+      "description": "Explains which library lookup path and query were used to verify the outcome.",
       "max_score": 10
     }
   ]

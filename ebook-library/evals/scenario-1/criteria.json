@@ -1,20 +1,20 @@
 {
-  "context": "This scenario checks that the agent can answer from searchable fixture content rather than metadata clues in file names.",
+  "context": "This scenario checks that the agent can answer from searchable library content rather than metadata clues in file names.",
   "type": "weighted_checklist",
   "checklist": [
     {
       "name": "correct book identified",
-      "description": "Reports the exact title 'The Problems of Philosophy', author 'Bertrand Russell', and book_id 4 from the fixture library.",
+      "description": "Reports the exact title 'The Problems of Philosophy', author 'Bertrand Russell', and book_id 4 from the library.",
       "max_score": 35
     },
     {
       "name": "content-derived discovery",
-      "description": "Uses content or metadata lookup against fixture data (not filename inference) and identifies the book based on the sense-data/G.E. Moore clue.",
+      "description": "Uses content or metadata lookup against library data (not filename inference) and identifies the book based on the sense-data/G.E. Moore clue.",
       "max_score": 30
     },
     {
       "name": "evidence snippet",
-      "description": "Includes a short quote/snippet from the fixture lookup showing both relevance to the provided clue and source of truth.",
+      "description": "Includes a short quote/snippet from the library lookup showing both relevance to the provided clue and source of truth.",
       "max_score": 25
     },
     {

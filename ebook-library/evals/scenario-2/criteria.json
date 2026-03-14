@@ -1,5 +1,5 @@
 {
-  "context": "This scenario tests path-resistance: the fixture includes plausible-looking directories and files that should be ignored unless supported by searchable text evidence.",
+  "context": "This scenario tests path-resistance: the library includes plausible-looking directories and files that should be ignored unless supported by searchable text evidence.",
   "type": "weighted_checklist",
   "checklist": [
     {
@@ -8,13 +8,13 @@
       "max_score": 35
     },
     {
-      "name": "uses fixture content search",
-      "description": "Uses a fixture content search path that proves the match from text (not from filenames/folder names).",
+      "name": "uses library content search",
+      "description": "Uses a library content search path that proves the match from text (not from filenames/folder names).",
       "max_score": 30
     },
     {
       "name": "supports claim with snippet",
-      "description": "Includes evidence snippet containing both terms (`all that is solid melts into air` and `all that is holy is profaned`), showing the source is real content from the fixture.",
+      "description": "Includes evidence snippet containing both terms (`all that is solid melts into air` and `all that is holy is profaned`), showing the source is real content from the library.",
       "max_score": 20
     },
     {

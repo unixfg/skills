@@ -1,29 +1,29 @@
 # Manual evals for ebook-library
 
-These evals assume a tiny deterministic Calibre fixture library lives under:
+These evals assume a tiny deterministic Calibre library lives under:
 
 `./sample-library/`
 
-Expected fixture layout:
+Expected library layout:
 
 - `./sample-library/metadata.db`
 - `./sample-library/full-text-search.db`
-- adversarial placeholder book files mixed into the same fixture
+- adversarial placeholder book files mixed into the same library
 - book files in normal Calibre per-author/per-book folders
 
-Current fixture books (core):
+Current library books (core):
 
 1. `Twenty Thousand Leagues under the Sea` - Jules Verne
 2. `The Problems of Philosophy` - Bertrand Russell
 3. `The Communist Manifesto` - Karl Marx, Friedrich Engels
 
-Known IDs in the current fixture:
+Known IDs in the current library:
 
 - `1` -> `Twenty Thousand Leagues under the Sea`
 - `4` -> `The Problems of Philosophy`
 - `6` -> `The Communist Manifesto`
 
-Why this fixture works well:
+Why this library works well:
 
 - mixed genres and authors for behavior coverage
 - metadata IDs and searchable text are deterministic
@@ -33,9 +33,9 @@ Why this fixture works well:
 Scenario coverage in this eval set (3 total):
 
 1. content-driven identification without title-path clues
-2. path-trap/global content match in a mixed fixture
+2. path-trap/global content match in a mixed library
 3. honest no-result handling (must not hallucinate)
 
 Each scenario assumes the agent can use the skill's bundled scripts and point them at the sample library when needed.
 
-Before running evals, verify the fixture exists and contains working Calibre databases.
+Before running evals, verify the library exists and contains working Calibre databases.

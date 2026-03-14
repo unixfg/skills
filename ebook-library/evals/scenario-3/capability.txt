@@ -1,1 +1,1 @@
-Honest empty-result handling for content search in the fixture library.
+Honest empty-result handling for content search in the library.
