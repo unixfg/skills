@@ -2,10 +2,10 @@
 name: tessl-release-manager
 description: >
   Manage the lifecycle of Tessl skills and tiles stored in a git repository. Use when creating,
-  refining, evaluating, versioning, tagging, publishing, validating, or troubleshooting Tessl-managed
-  skills across a repository. Covers when to bump versions, when to create release tags, when a new
-  eval is warranted, how to verify publish state, and how to keep repository changes, Tessl registry
-  state, and GitHub workflows aligned.
+  refining, evaluating, versioning, tagging, publishing, releasing, deploying, updating, validating,
+  or troubleshooting Tessl-managed skills across a repository. Covers when to bump versions, when to
+  create release tags, when a new eval is warranted, how to verify publish state, and how to keep
+  repository changes, Tessl registry state, and GitHub workflows aligned.
 ---
 
 # Tessl Release Manager
@@ -100,7 +100,7 @@ Keep eval concerns in eval files:
    - no release,
    - version bump only for pending release prep,
    - version bump plus Tessl release tag.
-4. Run Tessl checks before publishing:
+4. Run the common Tessl checks:
 
 ```bash
 env -u NODE_OPTIONS npx --yes tessl@latest skill lint ./tile.json
@@ -111,50 +111,9 @@ env -u NODE_OPTIONS npx --yes tessl@latest skill publish --dry-run .
 5. If publishable, bump `tile.json`.
 6. Commit the change.
 7. Create and push the release tags.
-8. Verify publish state using both GitHub and Tessl CLI.
+8. Verify publish state using the checks in [references/release-checks.md](references/release-checks.md).
 
-## Publish verification
-
-Check recent GitHub workflow runs:
-
-```bash
-gh run list --repo <owner/repo> --workflow "Publish <skill-name>" --limit 10
-```
-
-Check Tessl registry state:
-
-```bash
-env -u NODE_OPTIONS npx --yes tessl@latest search "<workspace>/<skill-name>"
-env -u NODE_OPTIONS npx --yes tessl@latest skill publish --dry-run .
-```
-
-Interpretation:
-- if dry-run says `<workspace>/<skill>@version already exists`, that version is already live
-- if GitHub publish succeeded and registry search shows the new version, publish worked
-- do not chase a suspected moderation failure without confirming those two facts first
-
-## Troubleshooting heuristics
-
-### Suspected moderation failure
-
-Before concluding moderation failed, check:
-- registry search for the target version
-- GitHub publish run conclusion
-- local `skill publish --dry-run`
-
-If the version already exists in Tessl, there is no current publish block.
-
-### Suspected auth failure in CI
-
-Distinguish publish-action auth from Tessl CLI auth.
-A GitHub action using `tesslio/publish@main` can succeed even when a separate Tessl CLI command in Actions fails.
-Validate with logs before assuming the token is universally valid.
-
-### Suspected quality regression
-
-Use Tessl review output to target the complaint precisely.
-If the complaint is about redundancy, reduce overlap instead of adding more guidance.
-If the complaint is about actionability, inline the essential commands before adding more prose.
+Read [references/release-checks.md](references/release-checks.md) when you need the detailed GitHub verification commands or troubleshooting flow for moderation, auth, or quality-review complaints.
 
 ## Boundaries
 

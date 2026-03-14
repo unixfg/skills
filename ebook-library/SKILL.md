@@ -143,21 +143,16 @@ python3 scripts/inspect_calibre_metadata.py \
 - When a hit needs proof, follow with `get_excerpt.py` and quote the returned snippet.
 - If you had to discover the library location, report the path you actually used.
 
-## Orchestration (preferred flow)
+## Orchestration (fallback rules)
 
-1. **Environment/checkpoint:** complete the library discovery and validation step before starting.
-   - If a provided path is unreadable, stop and report exactly which file is missing.
-2. **For title/author/topic questions:** run `find_books.py`.
-   - If results are empty, run `inspect_calibre_metadata.py` to confirm DB accessibility and give a short sample set,
-   - then retry with a shorter/partial query before returning no-match.
-3. **For phrase/quote tasks:**
-   - if a candidate `book_id` is already known, run `search_content.py` scoped to that ID,
-   - otherwise run a global `search_content.py`.
-   - If global search returns empty, confirm the search target with `inspect_calibre_metadata.py` and retry with a narrower phrase before reporting no hit.
-4. **For ambiguous/empty candidate discovery:** if `find_books.py` returns multiple plausible titles, fetch short context with additional scoped `search_content.py` searches before selecting one candidate.
-5. **For hit verification:** when a hit is found and needs proof, call `get_excerpt.py` to produce a stable snippet; if this returns an error, re-run a broader quote search in the same source before concluding failure.
-6. **For path resolution:** if `resolve_book.py` returns `exists: false`, verify `book_id` via `find_books.py` (in case of stale IDs), then retry resolution with the known preferred format.
-7. Return results with transparent evidence fields: book id, title, author, method used, and snippet/path depending on query.
+After the library discovery step, use the decision tree and common commands above. Apply these extra fallback rules only when the first pass does not resolve the task:
+
+1. If `find_books.py` returns no results, run `inspect_calibre_metadata.py` to confirm DB accessibility, then retry with a shorter or partial query.
+2. If a global phrase search returns no results, confirm the target with `inspect_calibre_metadata.py`, then retry with a narrower phrase.
+3. If `find_books.py` returns multiple plausible titles, run scoped `search_content.py` searches to disambiguate before choosing a candidate.
+4. If a hit needs proof, run `get_excerpt.py`; if it errors, retry with a broader search in the same source before concluding failure.
+5. If `resolve_book.py` returns `exists: false`, verify the `book_id` via `find_books.py`, then retry path resolution with the preferred format.
+6. Return transparent evidence fields: book id, title, author, method used, and snippet or path as appropriate.
 
 ## Result handling
 
