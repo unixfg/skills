@@ -18,12 +18,20 @@ This skill is read-only. It can inspect Calibre databases and file paths but doe
 
 ## Environment discovery
 
-1. If you already know the library location:
-   - `CALIBRE_LIBRARY_ROOT`
-   - `CALIBRE_METADATA_DB="$CALIBRE_LIBRARY_ROOT/metadata.db"`
-   - `CALIBRE_FTS_DB="$CALIBRE_LIBRARY_ROOT/full-text-search.db"`
+1. If you already know the library location, set these first:
 
-2. If unknown, discover DB paths first (`metadata.db`, then `full-text-search.db`).
+```bash
+export CALIBRE_LIBRARY_ROOT="/path/to/Calibre Library"
+export CALIBRE_METADATA_DB="$CALIBRE_LIBRARY_ROOT/metadata.db"
+export CALIBRE_FTS_DB="$CALIBRE_LIBRARY_ROOT/full-text-search.db"
+```
+
+2. If unknown, discover DB paths first:
+
+```bash
+find "$HOME" -name metadata.db 2>/dev/null
+find "$HOME" -name full-text-search.db 2>/dev/null
+```
 
 ## Decision tree
 
@@ -34,12 +42,91 @@ This skill is read-only. It can inspect Calibre databases and file paths but doe
 - User asks to browse when search is vague → use `list_books.py`.
 - User asks for quick sanity checks → use `inspect_calibre_metadata.py`.
 
-### Quick example
+## Common commands
+
+Use these directly for the most common tasks.
+
+### Find books by title, author, or topic
 
 ```bash
-python3 scripts/find_books.py --db-path "$CALIBRE_METADATA_DB" --query "Dune"
-python3 scripts/search_content.py --fts-db "$CALIBRE_FTS_DB" --metadata-db "$CALIBRE_METADATA_DB" --book-id 4 --query "knowledge"
+python3 scripts/find_books.py \
+  --db-path "$CALIBRE_METADATA_DB" \
+  --query "Dune" \
+  --limit 5
 ```
+
+Returns a JSON array like:
+
+```json
+[{"id": 4, "title": "Dune", "authors": "Frank Herbert"}]
+```
+
+### Search for a phrase inside one known book
+
+```bash
+python3 scripts/search_content.py \
+  --fts-db "$CALIBRE_FTS_DB" \
+  --metadata-db "$CALIBRE_METADATA_DB" \
+  --book-id 4 \
+  --query "knowledge" \
+  --context 400
+```
+
+Use this first when you already know the target `book_id`.
+
+### Search for a phrase across the whole library
+
+```bash
+python3 scripts/search_content.py \
+  --fts-db "$CALIBRE_FTS_DB" \
+  --metadata-db "$CALIBRE_METADATA_DB" \
+  --query "artificial intelligence" \
+  --limit 10
+```
+
+### Pull a longer excerpt around a hit
+
+```bash
+python3 scripts/get_excerpt.py \
+  --fts-db "$CALIBRE_FTS_DB" \
+  --metadata-db "$CALIBRE_METADATA_DB" \
+  --book-id 4 \
+  --around "knowledge" \
+  --chars 800
+```
+
+### Resolve a Calibre book ID to a file path
+
+```bash
+python3 scripts/resolve_book.py \
+  --metadata-db "$CALIBRE_METADATA_DB" \
+  --library-root "$CALIBRE_LIBRARY_ROOT" \
+  --book-id 4 \
+  --format EPUB
+```
+
+### Browse books when search terms are vague
+
+```bash
+python3 scripts/list_books.py \
+  --db-path "$CALIBRE_METADATA_DB" \
+  --limit 50
+```
+
+### Sanity-check database access
+
+```bash
+python3 scripts/inspect_calibre_metadata.py \
+  --db-path "$CALIBRE_METADATA_DB" \
+  --limit 20
+```
+
+## Quick response rules
+
+- `find_books.py` and `search_content.py` return `[]` for honest no-match cases.
+- Invalid book IDs return structured JSON errors such as `{"error": "Book 999 not found", "error_code": "BOOK_NOT_FOUND"}`.
+- Prefer `search_content.py --book-id ...` over global content search whenever possible.
+- When a hit needs proof, follow with `get_excerpt.py` and quote the returned snippet.
 
 ## Orchestration (preferred flow)
 
