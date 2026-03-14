@@ -1,1 +1,1 @@
-Identify the correct book from content-based clues in library data (avoid title/author path inference).
+Locate the real bundled Calibre library, then identify the correct book from content-based clues in library data without relying on title/author path inference.

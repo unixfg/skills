@@ -1,25 +1,30 @@
 {
-  "context": "This scenario checks that the agent can answer from searchable library content rather than metadata clues in file names.",
+  "context": "This scenario checks that the agent first locates the real bundled Calibre library, then answers from searchable library content rather than metadata clues in file names.",
   "type": "weighted_checklist",
   "checklist": [
     {
+      "name": "library discovered correctly",
+      "description": "Verifies and reports the real bundled Calibre library path or database files before searching, instead of assuming or inventing a substitute library.",
+      "max_score": 20
+    },
+    {
       "name": "correct book identified",
       "description": "Reports the exact title 'The Problems of Philosophy', author 'Bertrand Russell', and book_id 4 from the library.",
-      "max_score": 35
+      "max_score": 30
     },
     {
       "name": "content-derived discovery",
-      "description": "Uses content or metadata lookup against library data (not filename inference) and identifies the book based on the sense-data/G.E. Moore clue.",
-      "max_score": 30
+      "description": "Uses content or metadata lookup against the real bundled library data (not filename inference) and identifies the book based on the sense-data/G.E. Moore clue.",
+      "max_score": 25
     },
     {
       "name": "evidence snippet",
       "description": "Includes a short quote/snippet from the library lookup showing both relevance to the provided clue and source of truth.",
-      "max_score": 25
+      "max_score": 15
     },
     {
       "name": "process explanation",
-      "description": "Briefly explains the lookup sequence used (query + validation) and stays consistent with the returned evidence.",
+      "description": "Briefly explains the lookup sequence used (library discovery + query + validation) and stays consistent with the returned evidence.",
       "max_score": 10
     }
   ]
