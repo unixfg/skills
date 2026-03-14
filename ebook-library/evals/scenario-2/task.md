@@ -1,4 +1,4 @@
-# Subtle phrase match in noisy librarys
+# Subtle phrase match in noisy libraries
 
 Use the bundled sample library at `./sample-library`.
 
