@@ -16,6 +16,14 @@ Use this skill when a user wants to look up, search, or resolve books in a local
 
 This skill is read-only. It can inspect Calibre databases and file paths but does not write to library metadata.
 
+## Non-negotiable rules
+
+- Use a real Calibre library only. The source of truth is `metadata.db` and, for text lookup, `full-text-search.db`.
+- Never create substitute `sample-library` content, fake JSON catalogs, invented book files, or ad hoc metadata when the real library is missing.
+- If the task says to use `./sample-library`, first verify that `./sample-library/metadata.db` exists. If it does not, stop and report the missing path instead of improvising.
+- If `metadata.db` is missing or unreadable, stop and report that metadata lookup cannot proceed.
+- If `full-text-search.db` is missing or unreadable, metadata lookup can still proceed, but content search and excerpts cannot.
+
 ## Environment discovery
 
 1. If you already know the library location, set these first:
@@ -26,12 +34,29 @@ export CALIBRE_METADATA_DB="$CALIBRE_LIBRARY_ROOT/metadata.db"
 export CALIBRE_FTS_DB="$CALIBRE_LIBRARY_ROOT/full-text-search.db"
 ```
 
-2. If unknown, discover DB paths first:
+2. If the task explicitly names a bundled library such as `./sample-library`, verify those exact paths first:
+
+```bash
+test -r ./sample-library/metadata.db && echo "metadata ok"
+test -r ./sample-library/full-text-search.db && echo "fts ok"
+```
+
+3. If the library root is unknown, discover DB paths first:
 
 ```bash
 find "$HOME" -name metadata.db 2>/dev/null
 find "$HOME" -name full-text-search.db 2>/dev/null
 ```
+
+4. Before running any lookup, confirm what is actually available:
+
+```bash
+test -r "$CALIBRE_METADATA_DB" && echo "metadata ok"
+test -r "$CALIBRE_FTS_DB" && echo "fts ok"
+```
+
+If `metadata.db` is missing, stop.
+If `full-text-search.db` is missing, restrict yourself to metadata/path tasks and say content search is unavailable.
 
 ## Decision tree
 
@@ -127,10 +152,15 @@ python3 scripts/inspect_calibre_metadata.py \
 - Invalid book IDs return structured JSON errors such as `{"error": "Book 999 not found", "error_code": "BOOK_NOT_FOUND"}`.
 - Prefer `search_content.py --book-id ...` over global content search whenever possible.
 - When a hit needs proof, follow with `get_excerpt.py` and quote the returned snippet.
+- If the expected bundled library is absent, say so plainly; do not replace it with made-up content.
+- If you had to discover the library location, report the path you actually used.
 
 ## Orchestration (preferred flow)
 
-1. **Environment/checkpoint:** verify the metadata DB path before starting (using your known env vars or discovery). If a path is provided but unreadable, stop and report exactly which path is missing.
+1. **Environment/checkpoint:** verify the library root and DB paths before starting.
+   - If the task names a specific bundled path such as `./sample-library`, check that exact path first.
+   - If a provided path is unreadable, stop and report exactly which file is missing.
+   - Never substitute a homemade library when the expected one is absent.
 2. **For title/author/topic questions:** run `find_books.py`.
    - If results are empty, run `inspect_calibre_metadata.py` to confirm DB accessibility and give a short sample set,
    - then retry with a shorter/partial query before returning no-match.
