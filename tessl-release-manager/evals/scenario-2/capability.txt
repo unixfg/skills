@@ -1,0 +1,1 @@
+Use Tessl CLI and GitHub workflow evidence to verify publish state and avoid inventing moderation failures.

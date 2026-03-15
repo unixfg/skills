@@ -1,0 +1,31 @@
+{
+  "context": "This scenario checks whether the agent applies the meta-skill's release rules when user-visible guidance, references, and eval behavior changed after the last published version.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "requires version bump",
+      "description": "Clearly says a version bump is needed because published behavior or eval behavior changed.",
+      "max_score": 25
+    },
+    {
+      "name": "default patch semantics",
+      "description": "Chooses a patch bump by default and identifies the target version as 1.4.3.",
+      "max_score": 20
+    },
+    {
+      "name": "requires release tags",
+      "description": "Says Tessl release tags should be created after the bump, not skipped.",
+      "max_score": 20
+    },
+    {
+      "name": "exact tag names",
+      "description": "Includes both exact tags: `v1.4.3` and `tessl-search-helper-1.4.3`.",
+      "max_score": 20
+    },
+    {
+      "name": "common validation commands",
+      "description": "Mentions the common Tessl checks before publish: `skill lint ./tile.json`, `skill review --json .`, and `skill publish --dry-run .`.",
+      "max_score": 15
+    }
+  ]
+}

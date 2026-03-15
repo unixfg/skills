@@ -1,0 +1,26 @@
+{
+  "context": "This scenario checks whether the agent recommends adding benchmark coverage when an important failure mode was not caught by current evals.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "chooses new eval scenario",
+      "description": "Recommends adding a new eval scenario rather than doing nothing.",
+      "max_score": 35
+    },
+    {
+      "name": "reason matches uncovered failure mode",
+      "description": "Explains that the current eval set missed a real shortcut/discovery/validation failure mode.",
+      "max_score": 30
+    },
+    {
+      "name": "names the benchmark gap",
+      "description": "Identifies the gap as missing coverage for discovery, validation, shortcutting, honesty, or another important workflow branch.",
+      "max_score": 20
+    },
+    {
+      "name": "stays generic",
+      "description": "Keeps the recommendation generic and does not invent benchmark-specific trap details for the skill body.",
+      "max_score": 15
+    }
+  ]
+}

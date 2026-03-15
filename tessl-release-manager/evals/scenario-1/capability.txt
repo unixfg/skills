@@ -1,0 +1,1 @@
+Decide when a changed Tessl-managed skill needs a patch bump, release tags, and standard pre-publish validation commands.

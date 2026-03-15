@@ -34,6 +34,20 @@ Do not put skill-specific domain rules here. This is meta-process guidance.
 - Do not assume a failed-looking publish is moderation-related until registry state and publish logs confirm it.
 - Prefer Tessl CLI verification over guesswork.
 
+## Local source map for this workspace
+
+Distinguish the local sources before changing anything:
+
+- `~/workspace/skills` is the messy local skills root. It contains OpenClaw-installed skills and other local skill folders.
+- `~/workspace/skills/unixfg/skills` is the git repo for original Tessl skills created and published from this workspace.
+- `~/workspace/tessl` is the intended home for Tessl-managed third-party skills tied to `~/workspace/tessl.json`; manage those with the Tessl CLI while logged in as `jobe-bot`.
+
+Default behavior:
+- when editing or releasing an original Tessl skill, work in `~/workspace/skills/unixfg/skills`
+- when checking available OpenClaw skills, inspect `~/workspace/skills`
+- when adding, removing, or updating third-party Tessl dependencies, use the Tessl CLI against the Tessl-managed area instead of hand-editing vendored files
+- do not treat scratch repos or `/tmp` workdirs as the source of truth for installed or managed skills
+
 ## When to version bump
 
 Bump the skill version in `tile.json` when any of the following changes after the last published version:

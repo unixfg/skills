@@ -1,0 +1,1 @@
+Decide when a missed shortcut or discovery/validation failure warrants a new eval scenario instead of no change or a minimal wording tweak.

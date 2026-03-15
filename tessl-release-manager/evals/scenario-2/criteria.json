@@ -1,0 +1,26 @@
+{
+  "context": "This scenario checks whether the agent treats Tessl registry state and successful publish evidence as authoritative before blaming moderation.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "rejects unsupported moderation claim",
+      "description": "States that there is no current evidence of a moderation failure or active publish block.",
+      "max_score": 35
+    },
+    {
+      "name": "uses dry-run evidence correctly",
+      "description": "Interprets `already exists` as meaning the target version is already live in Tessl.",
+      "max_score": 25
+    },
+    {
+      "name": "uses workflow and registry evidence",
+      "description": "Uses the successful GitHub publish run and registry search result to support the diagnosis.",
+      "max_score": 25
+    },
+    {
+      "name": "appropriate next step",
+      "description": "Suggests no further moderation chase; at most, re-check UI propagation or inspect logs only if facts later disagree.",
+      "max_score": 15
+    }
+  ]
+}
