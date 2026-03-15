@@ -20,6 +20,12 @@ python3 scripts/check_config.py
 python3 scripts/prom_query.py config
 ```
 
+Run the full smoke test suite against a live configuration:
+
+```bash
+./scripts/smoke_test.sh
+```
+
 Run an instant query:
 
 ```bash

@@ -107,6 +107,34 @@ On invalid timeout format it returns:
 }
 ```
 
+## 3. `scripts/smoke_test.sh`
+
+Run local unit tests plus a live end-to-end smoke pass against the configured
+Prometheus and token endpoints.
+
+```bash
+./scripts/smoke_test.sh
+```
+
+Required environment variables are the same as `prom_query.py`:
+
+- `PROM_QUERY_PROMETHEUS_URL`
+- `PROM_QUERY_TOKEN_URL`
+- `PROM_QUERY_CLIENT_ID`
+- `PROM_QUERY_CLIENT_SECRET`
+
+The script runs, in order:
+
+1. `python3 -m unittest -v tests/test_prom_query.py`
+2. `python3 scripts/check_config.py`
+3. `python3 scripts/prom_query.py config`
+4. `python3 scripts/prom_query.py token --refresh`
+5. `python3 scripts/prom_query.py token`
+6. `python3 scripts/prom_query.py query --expr 'up'`
+7. `python3 scripts/prom_query.py alerts --state firing`
+8. `python3 scripts/prom_query.py alerts --state pending`
+9. `python3 scripts/prom_query.py alerts --state inactive`
+
 ## Known error codes
 
 - `INVALID_TIMEOUT`
