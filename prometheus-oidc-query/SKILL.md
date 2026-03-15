@@ -47,7 +47,7 @@ Optional:
 - User asks for a direct PromQL expression → use `query` with that expression.
 - User asks about alert state or mentions `ALERTS` → use `alerts` subcommand.
 - User needs environment readiness before any live call → start with `check_config.py`.
-- User asks for examples / setup details → use `docs/index.md`.
+- User asks for examples / setup details → use the command examples and environment notes in this skill plus [references/scripts.md](references/scripts.md).
 
 ## Orchestration (preferred flow)
 
