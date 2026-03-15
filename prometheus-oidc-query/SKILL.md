@@ -66,6 +66,6 @@ Optional:
 - Keep secrets redacted (`client_secret` and raw tokens are not printed).
 - Scripts return machine-readable JSON payloads.
 - On script failures, return `{ "error": ..., "error_code": ... }` with non-zero exit code.
-- For command reference and exact payload fields, see `references/scripts.md`.
+- For command reference and exact payload fields, see [references/scripts.md](references/scripts.md).
 
-For exact command syntax, output structures, and error codes, use `references/scripts.md`.
+For exact command syntax, output structures, and error codes, use [references/scripts.md](references/scripts.md).
