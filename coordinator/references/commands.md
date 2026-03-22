@@ -39,7 +39,7 @@ Create a task through the UI when possible:
 Use scripts when you need deterministic smoke tests or lower-level control:
 
 ```bash
-python3 scripts/enqueue-task.py --task-kind builder --summary 'Example task' --source manual --requested-by ryan
+python3 scripts/enqueue-task.py --task-kind builder --summary 'Example task' --source manual --requested-by User
 python3 scripts/list-tasks.py --json
 ```
 
