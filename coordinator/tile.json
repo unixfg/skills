@@ -1,0 +1,11 @@
+{
+  "name": "jobe-skills/coordinator",
+  "version": "0.1.0",
+  "private": true,
+  "summary": "Coordinate local OpenClaw phase-3 control-plane work: operate AgentHQ service health, inspect/create/dispatch/reconcile canonical tasks, supervise worker progress, checkpoint coordinator changes in Git, and propagate inherited coordination boundaries into agent guidance.",
+  "skills": {
+    "coordinator": {
+      "path": "SKILL.md"
+    }
+  }
+}
