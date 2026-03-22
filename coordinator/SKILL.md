@@ -31,7 +31,7 @@ Do not use this skill for narrow implementation slices that belong to Builder or
 - Prefer repo-owned control-plane commands over ad hoc shell one-offs.
 - Use short progress checkpoints in the form `Doing -> Why -> Blocker/ETA` for longer coordinator work.
 - Commit and push often. Prefer checkpointing progress over waiting for repeated `proceed` / `continue` prompts.
-- Treat external contribution restrictions as inherited coordinator policy: never open, submit, or update PRs outside Ryan-owned or `jobe-bot`-owned repos unless Ryan explicitly authorizes that exact repo in the main session.
+- Treat external contribution restrictions as inherited coordinator policy: never open, submit, or update PRs outside User-owned or `jobe-bot`-owned repos unless User explicitly authorizes that exact repo in the main session.
 - When creating new agent-specific guidance or bootstrap files, propagate inherited boundaries instead of assuming they will be remembered implicitly.
 
 ## Control-plane boundary
