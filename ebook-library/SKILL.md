@@ -29,9 +29,12 @@ export CALIBRE_METADATA_DB="$CALIBRE_LIBRARY_ROOT/metadata.db"
 export CALIBRE_FTS_DB="$CALIBRE_LIBRARY_ROOT/full-text-search.db"
 ```
 
-2. If the library root is unknown, discover DB paths first:
+2. If the library root is unknown, first check task-local or worktree-local DBs, then scan broader locations:
 
 ```bash
+pwd
+find . -maxdepth 4 -name metadata.db 2>/dev/null
+find . -maxdepth 4 -name full-text-search.db 2>/dev/null
 find "$HOME" -name metadata.db 2>/dev/null
 find "$HOME" -name full-text-search.db 2>/dev/null
 ```
@@ -46,6 +49,7 @@ test -r "$CALIBRE_FTS_DB" && echo "fts ok"
 - If the task names a specific library path, check that exact path first.
 - If `metadata.db` is missing or unreadable, stop and report the missing path.
 - If `full-text-search.db` is missing or unreadable, restrict yourself to metadata/path tasks and say content search is unavailable.
+- When you discover the library dynamically, report the exact verified DB path or root you actually used; do not normalize, shorten, or rewrite it.
 
 ## Decision tree
 
@@ -140,8 +144,9 @@ python3 scripts/inspect_calibre_metadata.py \
 - `find_books.py` and `search_content.py` return `[]` for honest no-match cases.
 - Invalid book IDs return structured JSON errors such as `{"error": "Book 999 not found", "error_code": "BOOK_NOT_FOUND"}`.
 - Prefer `search_content.py --book-id ...` over global content search whenever possible.
+- For clue-based identification tasks, prefer content search before metadata browsing; use metadata afterward to confirm the selected match.
 - When a hit needs proof, follow with `get_excerpt.py` and quote the returned snippet.
-- If you had to discover the library location, report the path you actually used.
+- If you had to discover the library location, report the exact verified path you actually used.
 
 ## Orchestration (fallback rules)
 
@@ -166,4 +171,4 @@ After the library discovery step, use the decision tree and common commands abov
 - Do not guess book titles/authors when lookup returns no match.
 - Prefer precise scoped searches to reduce unnecessary full-library scans.
 
-For exact script arguments, output formats, examples, and error payloads, see `references/scripts.md`.
+For exact script arguments, output formats, examples, and error payloads, see [references/scripts.md](references/scripts.md).

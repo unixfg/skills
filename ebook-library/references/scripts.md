@@ -26,9 +26,12 @@ export CALIBRE_METADATA_DB="$CALIBRE_LIBRARY_ROOT/metadata.db"
 export CALIBRE_FTS_DB="$CALIBRE_LIBRARY_ROOT/full-text-search.db"
 ```
 
-If you need to discover the DB locations:
+If you need to discover the DB locations, check task-local or worktree-local DBs before broader scans:
 
 ```bash
+pwd
+find . -maxdepth 4 -name metadata.db 2>/dev/null
+find . -maxdepth 4 -name full-text-search.db 2>/dev/null
 find "$HOME" -name metadata.db 2>/dev/null
 find "$HOME" -name full-text-search.db 2>/dev/null
 ```
