@@ -76,6 +76,21 @@ git commit -m "Short subject\n\nSummary\n- bullet"
 
 GitHub will often show the backslash escapes literally, which makes the commit body ugly and harder to read.
 
+## GitHub CLI auth in token-driven environments
+
+If the environment already provides a GitHub token, prefer using it non-interactively with `gh` instead of assuming an interactive `gh auth login` flow.
+
+Practical rule:
+- if `GH_TOKEN` or `GITHUB_TOKEN` is present, run `gh` with that environment in scope
+- do not print or echo the token
+- if `gh auth status` still says not logged in, check whether the token env var is actually present in the current process environment before assuming GitHub CLI is broken
+
+Example:
+
+```bash
+GH_TOKEN="${GH_TOKEN:-$GITHUB_TOKEN}" gh pr create --repo owner/repo ...
+```
+
 ## Operator checklist
 
 Before saying a skill change is done, confirm:
@@ -83,6 +98,7 @@ Before saying a skill change is done, confirm:
 - the change is not only in a runtime sync target
 - the diff includes both the behavior change and any needed operator guidance
 - the commit message body renders as intended when read as plain text
+- any `gh` usage matches the actual auth model available in the environment
 
 ## References
 
