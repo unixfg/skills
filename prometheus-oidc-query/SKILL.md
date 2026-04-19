@@ -43,11 +43,10 @@ Optional:
 
 ## Decision tree
 
-- Token validation or auth troubleshooting only → run `config` or `token` first.
-- Direct PromQL request → run `query` with the provided expression.
+- Auth or token troubleshooting → run `config` or `token` first.
+- Direct PromQL request → run `query`.
 - Alert-state request or mention of `ALERTS` → run `alerts`.
-- Environment readiness check before live calls → run `check_config.py`.
-- Examples or setup details → use this skill plus [references/scripts.md](references/scripts.md).
+- Readiness or setup question → run `check_config.py` or use [references/scripts.md](references/scripts.md).
 
 ## Safety and result handling
 
@@ -60,12 +59,5 @@ Optional:
 - Keep secrets redacted (`client_secret` and raw tokens are not printed).
 - Scripts return machine-readable JSON payloads.
 - On script failures, return `{ "error": ..., "error_code": ... }` with non-zero exit code.
-
-## Result handling
-
-- Keep secrets redacted (`client_secret` and raw tokens are not printed).
-- Scripts return machine-readable JSON payloads.
-- On script failures, return `{ "error": ..., "error_code": ... }` with non-zero exit code.
-- For command reference and exact payload fields, see [references/scripts.md](references/scripts.md).
 
 For exact command syntax, output structures, and error codes, use [references/scripts.md](references/scripts.md).
