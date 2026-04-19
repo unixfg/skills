@@ -153,6 +153,7 @@ For the bees OpenClaw deployment, distinguish Git-tracked source of truth from t
 Operational rule:
 - Do not treat `/home/node/.openclaw/skills` or `/home/node/.openclaw/openclaw.json` as the canonical edit target for durable changes.
 - Runtime edits can appear to work immediately, but they are cache/materialized state and may be overwritten by restart, init, or the 5 minute first-party skill sync loop.
+- For the general first-party skills workflow, use the `git-managed-skills` skill; keep this section focused on cluster/runtime behavior.
 
 ### OpenClaw web auth behind oauth2-proxy/nginx
 For this deployment, keep external OAuth enabled at the nginx/oauth2-proxy edge and use OpenClaw gateway `auth.mode = "token"` for the backend hop.
@@ -167,6 +168,7 @@ Practical guidance:
 - Preserve websocket upgrade headers and generous proxy timeouts in nginx.
 - Store the gateway token in Kubernetes secrets and expose it under the env var expected by `openclaw.json`.
 - If the control UI suddenly stops authenticating after an app upgrade or proxy change, check for accidental drift back to `trusted-proxy` assumptions.
+
 
 ### OpenClaw workspace permissions on PVC/NFS-backed storage
 When bootstrapping OpenClaw workspaces from init containers on shared volumes, ownership and mode fixes that look reasonable on paper can still fail in practice.
