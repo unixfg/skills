@@ -50,8 +50,21 @@ class Settings:
 
 
 def cache_path() -> Path:
-    base = Path(os.environ.get("XDG_CACHE_HOME") or (Path.home() / ".cache"))
-    return base / CACHE_DIRECTORY / CACHE_FILENAME
+    xdg_cache_home = os.environ.get("XDG_CACHE_HOME")
+    if xdg_cache_home:
+        return Path(xdg_cache_home) / CACHE_DIRECTORY / CACHE_FILENAME
+
+    default_base = Path.home() / ".cache"
+    default_parent = default_base / CACHE_DIRECTORY
+    try:
+        default_parent.mkdir(parents=True, exist_ok=True)
+        probe = default_parent / ".write-test"
+        probe.write_text("ok", encoding="utf-8")
+        probe.unlink()
+        return default_parent / CACHE_FILENAME
+    except OSError:
+        fallback_base = Path("/tmp") / CACHE_DIRECTORY
+        return fallback_base / CACHE_FILENAME
 
 
 def load_settings() -> Settings:
