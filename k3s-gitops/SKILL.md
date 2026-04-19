@@ -142,6 +142,46 @@ sudo journalctl -u k3s -f
 
 ## Common Issues
 
+### OpenClaw on this cluster: source of truth vs runtime state
+For the bees OpenClaw deployment, distinguish Git-tracked source of truth from the files materialized inside the container:
+
+- `apps/openclaw/base/config/openclaw.json` is the durable source for gateway config.
+- `apps/openclaw/base/runtime/skills/skills-sources.json` controls which skill sources are synced.
+- `/home/node/.openclaw/openclaw.json` is a runtime copy on the PVC, populated by init containers.
+- `/home/node/.openclaw/skills` is a runtime sync target for first-party skills from `https://github.com/unixfg/skills.git`.
+
+Operational rule:
+- Do not treat `/home/node/.openclaw/skills` or `/home/node/.openclaw/openclaw.json` as the canonical edit target for durable changes.
+- Runtime edits can appear to work immediately, but they are cache/materialized state and may be overwritten by restart, init, or the 5 minute first-party skill sync loop.
+- For the general first-party skills workflow, use the `git-managed-skills` skill; keep this section focused on cluster/runtime behavior.
+
+### OpenClaw web auth behind oauth2-proxy/nginx
+For this deployment, keep external OAuth enabled at the nginx/oauth2-proxy edge and use OpenClaw gateway `auth.mode = "token"` for the backend hop.
+
+Why this is the preferred pattern here:
+- `trusted-proxy` is brittle in Kubernetes when the immediate source IP seen by OpenClaw is a pod-internal or loopback hop.
+- The web UI path needs websocket support and long-lived upgraded connections through the sidecar proxy.
+- A shared secret between nginx and OpenClaw is a cleaner boundary when OAuth is already enforced in front.
+
+Practical guidance:
+- Keep oauth2-proxy enforcing login for the public entrypoint.
+- Preserve websocket upgrade headers and generous proxy timeouts in nginx.
+- Store the gateway token in Kubernetes secrets and expose it under the env var expected by `openclaw.json`.
+- If the control UI suddenly stops authenticating after an app upgrade or proxy change, check for accidental drift back to `trusted-proxy` assumptions.
+
+
+### OpenClaw workspace permissions on PVC/NFS-backed storage
+When bootstrapping OpenClaw workspaces from init containers on shared volumes, ownership and mode fixes that look reasonable on paper can still fail in practice.
+
+Observed cluster lesson:
+- Precreating workspace paths with `chown 1000:1000` and `0775` was not reliable enough after migration.
+- Switching the precreated Discord workspace roots to `0777` was the pragmatic fix that restored writeability for non-root runtime processes.
+
+Operational takeaway:
+- If Discord or secondary workspaces break after migration, inspect directory mode/ownership before debugging the agent itself.
+- Expect init containers running as root to create paths later used by non-root OpenClaw processes.
+- Treat PVC/NFS permission behavior as a deployment concern, not an application bug, until proven otherwise.
+
 ### Kyverno Webhook Deadlock
 If apiserver can't start due to missing Kyverno endpoints:
 ```bash

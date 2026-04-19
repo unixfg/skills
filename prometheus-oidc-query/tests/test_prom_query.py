@@ -81,6 +81,24 @@ class PromQueryTests(unittest.TestCase):
 
         self.assertIsNone(cached)
 
+    def test_cache_path_uses_xdg_cache_home_when_set(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with mock.patch.dict(os.environ, {"XDG_CACHE_HOME": temp_dir}, clear=False):
+                path = prom_query.cache_path()
+
+        self.assertEqual(
+            path,
+            Path(temp_dir) / "prometheus-oidc-query" / "token-cache.json",
+        )
+
+    def test_cache_path_falls_back_to_tmp_when_default_cache_is_not_writable(self):
+        with mock.patch.dict(os.environ, {}, clear=True):
+            with mock.patch.object(prom_query.Path, "home", return_value=Path("/readonly-home")):
+                with mock.patch("pathlib.Path.mkdir", side_effect=OSError("read-only")):
+                    path = prom_query.cache_path()
+
+        self.assertEqual(path, Path("/tmp") / "prometheus-oidc-query" / "token-cache.json")
+
     def test_get_access_token_uses_existing_cache(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             settings = self.make_settings(Path(temp_dir))
