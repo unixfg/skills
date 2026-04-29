@@ -1,6 +1,6 @@
 {
   "name": "jobe-skills/online-book-lookup",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": false,
   "summary": "Use when the user asks to look up online book metadata by ISBN, title, author, publication details, editions, subjects, covers, or Open Library source URLs.",
   "skills": {

@@ -16,7 +16,7 @@ BASE_URL = "https://openlibrary.org"
 DEFAULT_LIMIT = 5
 MAX_LIMIT = 20
 DEFAULT_TIMEOUT = 15.0
-USER_AGENT = "online-book-lookup/1.0.1 (low-volume human-triggered lookup)"
+USER_AGENT = "online-book-lookup/1.0.2 (low-volume human-triggered lookup)"
 KEY_PATTERNS = {
     "author": re.compile(r"^/authors/OL\d+A$"),
     "edition": re.compile(r"^/books/OL\d+M$"),
