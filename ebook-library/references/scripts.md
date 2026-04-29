@@ -61,7 +61,10 @@ Typical output:
   {
     "id": 4,
     "title": "The Problems of Philosophy",
-    "authors": "Bertrand Russell"
+    "authors": "Bertrand Russell",
+    "pubdate": "2004-06-02 00:00:00+00:00",
+    "timestamp": "2026-03-10 20:25:41.246772+00:00",
+    "last_modified": "2026-03-10 20:43:05.569779+00:00"
   }
 ]
 ```
@@ -170,15 +173,64 @@ Format matching is case-insensitive, so `--format epub` works.
 
 If `exists` is `false`, the Calibre metadata is stale or the file moved.
 
-## 6. `list_books.py` - Browse titles alphabetically
+## 6. `list_books.py` - Browse, filter, and sort books
 
-Useful when fuzzy title or author searches keep returning `[]`.
+Useful when fuzzy title or author searches keep returning `[]`, or when the user asks for newest/recent books or books by date.
 
 ```bash
 python3 scripts/list_books.py \
   --db-path "$CALIBRE_METADATA_DB" \
   --limit 200
 ```
+
+Default output is alphabetical by title and includes:
+
+```json
+[
+  {
+    "id": 4,
+    "title": "The Problems of Philosophy",
+    "authors": "Bertrand Russell",
+    "pubdate": "2004-06-02 00:00:00+00:00",
+    "timestamp": "2026-03-10 20:25:41.246772+00:00",
+    "last_modified": "2026-03-10 20:43:05.569779+00:00",
+    "formats": ["EPUB", "TXT"],
+    "tags": ["Knowledge", "Philosophy -- Introductions"],
+    "publishers": []
+  }
+]
+```
+
+Newest books by publication date:
+
+```bash
+python3 scripts/list_books.py \
+  --db-path "$CALIBRE_METADATA_DB" \
+  --sort pubdate \
+  --order desc \
+  --limit 10
+```
+
+Books published in a date range:
+
+```bash
+python3 scripts/list_books.py \
+  --db-path "$CALIBRE_METADATA_DB" \
+  --date-field pubdate \
+  --from-date 2026-04-01 \
+  --to-date 2026-04-30
+```
+
+Supported options:
+
+- `--sort title|author|pubdate|timestamp|last_modified`
+- `--order asc|desc`
+- `--query TEXT` matches title, author, tag, or publisher
+- `--author TEXT`, `--tag TEXT`, `--format FORMAT`, `--publisher TEXT`
+- `--date-field pubdate|timestamp|last_modified`
+- `--from-date YYYY-MM-DD`, `--to-date YYYY-MM-DD`
+
+Use `pubdate` for publication date, `timestamp` for Calibre-added/imported date, and `last_modified` for modified date.
 
 ## 7. `inspect_calibre_metadata.py` - Sanity-check metadata access
 
@@ -194,7 +246,7 @@ It returns counts such as `book_count`, `author_count`, `format_counts`, and `sa
 
 ## Result Handling
 
-- `find_books.py` returns a JSON array. Empty results are `[]`, not errors.
+- `find_books.py` and `list_books.py` return JSON arrays. Empty results are `[]`, not errors.
 - `search_content.py` returns a JSON array for successful searches and a JSON error object for invalid `--book-id`, missing text, or empty queries.
 - `get_excerpt.py` and `resolve_book.py` return JSON objects and use an `"error"` field for invalid book IDs, missing text, bad positions, or missing formats.
 - When a `book_id` fails unexpectedly, rerun `find_books.py` first to confirm the title and author mapping before assuming the content index is wrong.

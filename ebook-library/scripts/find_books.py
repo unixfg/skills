@@ -21,7 +21,8 @@ def search(db_path, query, limit=50):
     exact = query.lower()
     try:
         sql = (
-            "SELECT b.id, b.title, group_concat(a.name, ', ') AS authors "
+            "SELECT b.id, b.title, group_concat(a.name, ', ') AS authors, "
+            "b.pubdate, b.timestamp, b.last_modified "
             "FROM books b LEFT JOIN books_authors_link bal ON bal.book=b.id "
             "LEFT JOIN authors a ON a.id=bal.author "
             "WHERE lower(b.title) LIKE ? OR lower(a.name) LIKE ? "
@@ -36,7 +37,14 @@ def search(db_path, query, limit=50):
         rows = cur.fetchall()
         out = []
         for r in rows:
-            out.append({"id": int(r[0]), "title": r[1], "authors": r[2]})
+            out.append({
+                "id": int(r[0]),
+                "title": r[1],
+                "authors": r[2],
+                "pubdate": r[3],
+                "timestamp": r[4],
+                "last_modified": r[5],
+            })
         print(json.dumps(out, indent=2, ensure_ascii=False))
         return 0
     except Exception as e:

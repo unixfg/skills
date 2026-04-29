@@ -1,7 +1,7 @@
 ---
 name: ebook-library
 description: >
-  Use this skill when the user asks to search or browse a Calibre ebook library. It helps find books by title/author/topic, locate file paths, and search inside EPUB/AZW3 text for quotes or passages.
+  Use this skill when the user asks to search or browse a Calibre ebook library. It helps find books by title/author/topic/date, locate file paths, and search inside EPUB/AZW3 text for quotes or passages.
 
   Do not use this skill for conversion, metadata editing, downloads, recommendations, or non-Calibre sources.
 compatibility: >
@@ -50,6 +50,7 @@ test -r "$CALIBRE_FTS_DB" && echo "fts ok"
 ## Decision tree
 
 - User asks for books by metadata (title, author, topic) → use `find_books.py`.
+- User asks for newest/latest/recent books or books by publication/added/modified date → use `list_books.py`.
 - User asks for a quote/passage (global or in one book) → use `search_content.py` (prefer `--book-id` when possible).
 - User asks for nearby context around a hit → use `get_excerpt.py`.
 - User asks for file path → use `resolve_book.py`.
@@ -72,7 +73,14 @@ python3 scripts/find_books.py \
 Returns a JSON array like:
 
 ```json
-[{"id": 4, "title": "Dune", "authors": "Frank Herbert"}]
+[{
+  "id": 4,
+  "title": "Dune",
+  "authors": "Frank Herbert",
+  "pubdate": "1965-08-01 00:00:00+00:00",
+  "timestamp": "2026-03-10 20:25:41.246772+00:00",
+  "last_modified": "2026-03-10 20:43:05.569779+00:00"
+}]
 ```
 
 ### Search for a phrase inside one known book
@@ -119,13 +127,36 @@ python3 scripts/resolve_book.py \
   --format EPUB
 ```
 
-### Browse books when search terms are vague
+### Browse, filter, and sort books
 
 ```bash
 python3 scripts/list_books.py \
   --db-path "$CALIBRE_METADATA_DB" \
   --limit 50
 ```
+
+Newest by publication date:
+
+```bash
+python3 scripts/list_books.py \
+  --db-path "$CALIBRE_METADATA_DB" \
+  --sort pubdate \
+  --order desc \
+  --limit 10
+```
+
+Books published in April 2026:
+
+```bash
+python3 scripts/list_books.py \
+  --db-path "$CALIBRE_METADATA_DB" \
+  --date-field pubdate \
+  --from-date 2026-04-01 \
+  --to-date 2026-04-30
+```
+
+Other useful filters: `--query`, `--author`, `--tag`, `--format`, and `--publisher`.
+Use `--date-field timestamp` for Calibre-added/imported date and `--date-field last_modified` for modified date.
 
 ### Sanity-check database access
 
@@ -137,7 +168,8 @@ python3 scripts/inspect_calibre_metadata.py \
 
 ## Quick response rules
 
-- `find_books.py` and `search_content.py` return `[]` for honest no-match cases.
+- `find_books.py`, `list_books.py`, and `search_content.py` return `[]` for honest no-match cases.
+- For newest/latest/recent, use `list_books.py --sort pubdate --order desc` unless the user specifically asks for added/imported (`timestamp`) or modified (`last_modified`) date.
 - Invalid book IDs return structured JSON errors such as `{"error": "Book 999 not found", "error_code": "BOOK_NOT_FOUND"}`.
 - Prefer `search_content.py --book-id ...` over global content search whenever possible.
 - When a hit needs proof, follow with `get_excerpt.py` and quote the returned snippet.

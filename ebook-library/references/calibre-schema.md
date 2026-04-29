@@ -8,10 +8,13 @@
 | id | INTEGER | Primary key |
 | title | TEXT | Book title |
 | sort | TEXT | Sort key |
+| timestamp | TIMESTAMP | Date added/imported into Calibre |
+| pubdate | TIMESTAMP | Publication date |
 | path | TEXT | Relative path from library root |
 | author_sort | TEXT | Author name for sorting |
 | has_cover | BOOL | Cover image exists |
 | uuid | TEXT | Unique identifier |
+| last_modified | TIMESTAMP | Last metadata modification date |
 
 ### authors
 | Column | Type |
