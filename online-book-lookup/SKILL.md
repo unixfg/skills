@@ -1,9 +1,11 @@
 ---
 name: online-book-lookup
 description: >
-  Use this skill when the user asks to look up book information online by ISBN,
-  title, author, publication details, editions, subjects, covers, or Open Library
-  source URLs. This skill uses Open Library for read-only public book metadata.
+  Use this skill when the user asks to retrieve online book metadata, list
+  editions, identify authors and publishers, find publication details, surface
+  subjects, display cover image URLs, or cite Open Library source URLs by ISBN,
+  title, author, or broad book query. This skill uses Open Library for
+  read-only public book metadata.
 
   Do not use this skill for ebook downloads, shopping links, review aggregation,
   broad reading recommendations, metadata editing, or claims about any user's
