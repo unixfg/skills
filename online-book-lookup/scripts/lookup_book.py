@@ -17,6 +17,11 @@ DEFAULT_LIMIT = 5
 MAX_LIMIT = 20
 DEFAULT_TIMEOUT = 15.0
 USER_AGENT = "online-book-lookup/1.0.0 (low-volume human-triggered lookup)"
+KEY_PATTERNS = {
+    "author": re.compile(r"^/authors/OL\d+A$"),
+    "edition": re.compile(r"^/books/OL\d+M$"),
+    "work": re.compile(r"^/works/OL\d+W$"),
+}
 SEARCH_FIELDS = ",".join(
     [
         "key",
@@ -196,12 +201,32 @@ def first_year(value: Any) -> int | None:
     return int(match.group(1))
 
 
-def ensure_key_prefix(key: str | None, prefix: str) -> str | None:
+def safe_text(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    text = " ".join(value.split())
+    if not text:
+        return None
+    return text[:500]
+
+
+def safe_text_list(value: Any, *, max_items: int = 10) -> list[str]:
+    return compact_list([safe_text(item) for item in compact_list(value, max_items=max_items)], max_items=max_items)
+
+
+def openlibrary_key(key: str | None, kind: str) -> str | None:
+    if not isinstance(key, str):
+        return None
+    if KEY_PATTERNS[kind].fullmatch(key):
+        return key
+    return None
+
+
+def ensure_key_prefix(key: str | None, prefix: str, kind: str) -> str | None:
     if not key:
         return None
-    if key.startswith(prefix):
-        return key
-    return f"{prefix}{key}"
+    prefixed = key if key.startswith(prefix) else f"{prefix}{key}"
+    return openlibrary_key(prefixed, kind)
 
 
 def page_url(key: str | None) -> str | None:
@@ -217,12 +242,16 @@ def api_url(key: str | None) -> str | None:
 
 
 def cover_urls_from_id(cover_id: Any) -> dict[str, str]:
-    if cover_id is None:
+    if isinstance(cover_id, int):
+        safe_cover_id = str(cover_id)
+    elif isinstance(cover_id, str) and re.fullmatch(r"\d+", cover_id):
+        safe_cover_id = cover_id
+    else:
         return {}
     return {
-        "small": f"https://covers.openlibrary.org/b/id/{cover_id}-S.jpg",
-        "medium": f"https://covers.openlibrary.org/b/id/{cover_id}-M.jpg",
-        "large": f"https://covers.openlibrary.org/b/id/{cover_id}-L.jpg",
+        "small": f"https://covers.openlibrary.org/b/id/{safe_cover_id}-S.jpg",
+        "medium": f"https://covers.openlibrary.org/b/id/{safe_cover_id}-M.jpg",
+        "large": f"https://covers.openlibrary.org/b/id/{safe_cover_id}-L.jpg",
     }
 
 
@@ -238,6 +267,8 @@ def cover_urls_from_isbn(isbn: str | None) -> dict[str, str]:
 
 def source_urls(work_key: str | None = None, edition_key: str | None = None, isbn: str | None = None) -> dict[str, str]:
     urls: dict[str, str] = {}
+    work_key = openlibrary_key(work_key, "work")
+    edition_key = openlibrary_key(edition_key, "edition")
     if work_key:
         urls["work"] = page_url(work_key) or ""
         urls["work_api"] = api_url(work_key) or ""
@@ -250,20 +281,20 @@ def source_urls(work_key: str | None = None, edition_key: str | None = None, isb
 
 
 def normalize_search_doc(doc: dict[str, Any]) -> dict[str, Any]:
-    work_key = doc.get("key")
-    edition_key = ensure_key_prefix(first_item(doc.get("edition_key")), "/books/")
+    work_key = openlibrary_key(doc.get("key"), "work")
+    edition_key = ensure_key_prefix(first_item(doc.get("edition_key")), "/books/", "edition")
     isbn_10, isbn_13 = split_isbns(doc.get("isbn"))
     cover = cover_urls_from_id(doc.get("cover_i"))
 
     return {
-        "title": doc.get("title"),
-        "authors": compact_list(doc.get("author_name")),
+        "title": safe_text(doc.get("title")),
+        "authors": safe_text_list(doc.get("author_name")),
         "first_publish_year": doc.get("first_publish_year"),
-        "publish_date": first_item(doc.get("publish_date")),
-        "publishers": compact_list(doc.get("publisher")),
+        "publish_date": safe_text(first_item(doc.get("publish_date"))),
+        "publishers": safe_text_list(doc.get("publisher")),
         "isbn_10": isbn_10,
         "isbn_13": isbn_13,
-        "subjects": compact_list(doc.get("subject")),
+        "subjects": safe_text_list(doc.get("subject")),
         "openlibrary_work_key": work_key,
         "openlibrary_edition_key": edition_key,
         "cover_urls": cover,
@@ -271,46 +302,52 @@ def normalize_search_doc(doc: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def extract_ref_key(ref: Any) -> str | None:
+def extract_ref_key(ref: Any, kind: str) -> str | None:
     if isinstance(ref, dict):
         key = ref.get("key")
-        return key if isinstance(key, str) else None
+        return openlibrary_key(key, kind)
     if isinstance(ref, str):
-        return ref
+        return openlibrary_key(ref, kind)
     return None
 
 
-def fetch_optional_json(key: str | None, timeout: float) -> dict[str, Any] | None:
-    if not key:
+def search_doc_for_isbn(isbn: str, timeout: float) -> dict[str, Any] | None:
+    payload = fetch_json(
+        build_url(
+            "/search.json",
+            {
+                "isbn": isbn,
+                "fields": SEARCH_FIELDS,
+                "limit": 1,
+            },
+        ),
+        timeout,
+    )
+    docs = payload.get("docs", [])
+    if not isinstance(docs, list) or not docs or not isinstance(docs[0], dict):
         return None
-    try:
-        return fetch_json(api_url(key) or "", timeout)
-    except HttpStatusError as exc:
-        if exc.status == 404:
-            return None
-        raise
+    return docs[0]
 
 
-def fetch_author_name(author_ref: Any, timeout: float) -> str | None:
-    key = extract_ref_key(author_ref)
-    if not key:
-        return None
-    payload = fetch_optional_json(key, timeout)
-    if not payload:
-        return key
-    return payload.get("name") or payload.get("personal_name") or key
+def author_names_from_edition(edition: dict[str, Any]) -> list[str]:
+    names: list[str] = []
+    for author in compact_list(edition.get("authors"), max_items=10):
+        if not isinstance(author, dict):
+            continue
+        name = safe_text(author.get("name")) or safe_text(author.get("personal_name"))
+        if name and name not in names:
+            names.append(name)
+    return names
 
 
-def normalize_isbn_edition(isbn: str, edition: dict[str, Any], timeout: float) -> dict[str, Any]:
-    edition_key = edition.get("key")
-    work_key = extract_ref_key(first_item(edition.get("works")))
-    work = fetch_optional_json(work_key, timeout) if work_key else None
+def normalize_isbn_edition(isbn: str, edition: dict[str, Any], search_doc: dict[str, Any] | None = None) -> dict[str, Any]:
+    search_result = normalize_search_doc(search_doc) if search_doc else {}
+    edition_key = openlibrary_key(edition.get("key"), "edition")
+    work_key = extract_ref_key(first_item(edition.get("works")), "work")
+    if not work_key:
+        work_key = search_result.get("openlibrary_work_key")
 
-    author_refs = compact_list(edition.get("authors"), max_items=10)
-    if not author_refs and work:
-        author_refs = compact_list(work.get("authors"), max_items=10)
-        author_refs = [item.get("author") if isinstance(item, dict) else item for item in author_refs]
-    authors = compact_list([fetch_author_name(ref, timeout) for ref in author_refs])
+    authors = search_result.get("authors") or author_names_from_edition(edition)
 
     isbn_values = compact_list(edition.get("isbn_10"), max_items=100)
     isbn_values.extend(compact_list(edition.get("isbn_13"), max_items=100))
@@ -324,29 +361,32 @@ def normalize_isbn_edition(isbn: str, edition: dict[str, Any], timeout: float) -
             isbn_13.insert(0, isbn)
 
     edition_covers = compact_list(edition.get("covers"), max_items=1)
-    work_covers = compact_list(work.get("covers") if work else None, max_items=1)
-    cover_id = first_item(edition_covers) or first_item(work_covers)
-    cover_urls = cover_urls_from_id(cover_id) or cover_urls_from_isbn(isbn)
+    cover_urls = (
+        cover_urls_from_id(first_item(edition_covers))
+        or search_result.get("cover_urls")
+        or cover_urls_from_isbn(isbn)
+    )
 
-    publish_date = edition.get("publish_date") or (work.get("first_publish_date") if work else None)
-    first_publish_year = first_year(work.get("first_publish_date") if work else None) or first_year(publish_date)
-    subjects = compact_list(edition.get("subjects"), max_items=10)
-    if work:
-        subjects = compact_list(subjects + compact_list(work.get("subjects"), max_items=10), max_items=10)
+    publish_date = safe_text(edition.get("publish_date")) or search_result.get("publish_date")
+    first_publish_year = search_result.get("first_publish_year") or first_year(publish_date)
+    subjects = safe_text_list(edition.get("subjects"), max_items=10)
+    subjects = compact_list(subjects + compact_list(search_result.get("subjects"), max_items=10), max_items=10)
+
+    final_edition_key = edition_key or search_result.get("openlibrary_edition_key")
 
     return {
-        "title": edition.get("title") or (work.get("title") if work else None),
+        "title": safe_text(edition.get("title")) or search_result.get("title"),
         "authors": authors,
         "first_publish_year": first_publish_year,
         "publish_date": publish_date,
-        "publishers": compact_list(edition.get("publishers")),
+        "publishers": safe_text_list(edition.get("publishers")) or search_result.get("publishers", []),
         "isbn_10": isbn_10[:10],
         "isbn_13": isbn_13[:10],
         "subjects": subjects,
         "openlibrary_work_key": work_key,
-        "openlibrary_edition_key": edition_key,
+        "openlibrary_edition_key": final_edition_key,
         "cover_urls": cover_urls,
-        "source_urls": source_urls(work_key=work_key, edition_key=edition_key, isbn=isbn),
+        "source_urls": source_urls(work_key=work_key, edition_key=final_edition_key, isbn=isbn),
     }
 
 
@@ -366,12 +406,14 @@ def lookup_isbn(isbn_value: str, timeout: float) -> dict[str, Any]:
             }
         raise
 
+    search_doc = search_doc_for_isbn(isbn, timeout)
+
     return {
         "source": "Open Library",
         "lookup_type": "isbn",
         "query": {"isbn": isbn},
         "num_found": 1,
-        "results": [normalize_isbn_edition(isbn, edition, timeout)],
+        "results": [normalize_isbn_edition(isbn, edition, search_doc)],
     }
 
 

@@ -50,7 +50,7 @@ class LookupBookTests(unittest.TestCase):
                     "publisher": ["Chilton Books"],
                     "isbn": ["0441172717", "9780441172719"],
                     "cover_i": 12345,
-                    "edition_key": ["OL262758W"],
+                    "edition_key": ["OL12345M"],
                     "subject": ["Science fiction", "Arrakis"],
                 }
             ],
@@ -78,8 +78,42 @@ class LookupBookTests(unittest.TestCase):
         self.assertEqual(result["results"][0]["authors"], ["Frank Herbert"])
         self.assertEqual(result["results"][0]["isbn_10"], ["0441172717"])
         self.assertEqual(result["results"][0]["isbn_13"], ["9780441172719"])
-        self.assertEqual(result["results"][0]["openlibrary_edition_key"], "/books/OL262758W")
+        self.assertEqual(result["results"][0]["openlibrary_edition_key"], "/books/OL12345M")
         self.assertIn("medium", result["results"][0]["cover_urls"])
+
+    def test_search_result_drops_invalid_remote_keys_and_cover_ids(self):
+        payload = {
+            "numFound": 1,
+            "docs": [
+                {
+                    "key": "/works/../../bad",
+                    "title": "Injected\nTitle",
+                    "author_name": ["Author"],
+                    "edition_key": ["https://example.com/evil"],
+                    "cover_i": "../../not-a-cover",
+                }
+            ],
+        }
+
+        with mock.patch.object(
+            lookup_book.request,
+            "urlopen",
+            return_value=FakeResponse(payload),
+        ):
+            result = lookup_book.lookup_search(
+                query="Injected Title",
+                title=None,
+                author=None,
+                limit=5,
+                timeout=15,
+            )
+
+        book = result["results"][0]
+        self.assertEqual(book["title"], "Injected Title")
+        self.assertIsNone(book["openlibrary_work_key"])
+        self.assertIsNone(book["openlibrary_edition_key"])
+        self.assertEqual(book["cover_urls"], {})
+        self.assertEqual(book["source_urls"], {})
 
     def test_title_author_search_constructs_structured_query(self):
         with mock.patch.object(
@@ -103,7 +137,7 @@ class LookupBookTests(unittest.TestCase):
         self.assertEqual(result["query"]["author"], "Ursula K. Le Guin")
         self.assertEqual(result["results"], [])
 
-    def test_isbn_lookup_fetches_work_and_author_followups(self):
+    def test_isbn_lookup_uses_fixed_isbn_search_for_enrichment(self):
         edition = {
             "key": "/books/OL7353617M",
             "title": "Fantastic Mr. Fox",
@@ -115,22 +149,27 @@ class LookupBookTests(unittest.TestCase):
             "isbn_13": ["9780140328721"],
             "covers": [8739161],
         }
-        work = {
-            "key": "/works/OL45804W",
-            "title": "Fantastic Mr. Fox",
-            "first_publish_date": "1970",
-            "subjects": ["Foxes", "Farmers"],
+        isbn_search = {
+            "numFound": 1,
+            "docs": [
+                {
+                    "key": "/works/OL45804W",
+                    "title": "Fantastic Mr. Fox",
+                    "author_name": ["Roald Dahl"],
+                    "first_publish_year": 1970,
+                    "subject": ["Foxes", "Farmers"],
+                    "edition_key": ["OL7353617M"],
+                    "isbn": ["0140328726", "9780140328721"],
+                }
+            ],
         }
-        author = {"key": "/authors/OL34184A", "name": "Roald Dahl"}
 
         def fake_urlopen(req, timeout):
             url = req.full_url
             if url.endswith("/isbn/9780140328721.json"):
                 return FakeResponse(edition)
-            if url.endswith("/works/OL45804W.json"):
-                return FakeResponse(work)
-            if url.endswith("/authors/OL34184A.json"):
-                return FakeResponse(author)
+            if "/search.json?" in url and "isbn=9780140328721" in url:
+                return FakeResponse(isbn_search)
             raise AssertionError(f"unexpected URL {url}")
 
         with mock.patch.object(lookup_book.request, "urlopen", side_effect=fake_urlopen):
@@ -148,6 +187,35 @@ class LookupBookTests(unittest.TestCase):
         self.assertEqual(book["subjects"], ["Foxes", "Farmers"])
         self.assertEqual(book["source_urls"]["work_api"], "https://openlibrary.org/works/OL45804W.json")
         self.assertEqual(book["source_urls"]["isbn_api"], "https://openlibrary.org/isbn/9780140328721.json")
+        self.assertEqual(book["source_urls"]["edition_api"], "https://openlibrary.org/books/OL7353617M.json")
+
+    def test_isbn_lookup_does_not_follow_invalid_remote_keys(self):
+        edition = {
+            "key": "/books/OL7353617M",
+            "title": "Untrusted Edition",
+            "authors": [{"key": "/authors/../../bad"}],
+            "works": [{"key": "https://example.com/works/OL45804W"}],
+            "publishers": ["Publisher"],
+            "isbn_13": ["9780140328721"],
+        }
+
+        def fake_urlopen(req, timeout):
+            url = req.full_url
+            if url.endswith("/isbn/9780140328721.json"):
+                return FakeResponse(edition)
+            if "/search.json?" in url and "isbn=9780140328721" in url:
+                return FakeResponse({"numFound": 0, "docs": []})
+            raise AssertionError(f"unexpected follow-up URL {url}")
+
+        with mock.patch.object(lookup_book.request, "urlopen", side_effect=fake_urlopen):
+            result = lookup_book.lookup_isbn("9780140328721", timeout=15)
+
+        book = result["results"][0]
+        self.assertEqual(book["title"], "Untrusted Edition")
+        self.assertEqual(book["authors"], [])
+        self.assertIsNone(book["openlibrary_work_key"])
+        self.assertEqual(book["openlibrary_edition_key"], "/books/OL7353617M")
+        self.assertNotIn("work_api", book["source_urls"])
 
     def test_isbn_404_returns_empty_success(self):
         def fake_urlopen(req, timeout):
