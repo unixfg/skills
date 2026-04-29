@@ -8,12 +8,23 @@ import sqlite3
 import sys
 
 
+RATING_COLUMN = """
+    (
+        SELECT r.rating
+        FROM books_ratings_link brl
+        JOIN ratings r ON r.id = brl.rating
+        WHERE brl.book = b.id
+        LIMIT 1
+    )
+"""
+
 SORT_COLUMNS = {
     "title": "b.title COLLATE NOCASE",
     "author": "b.author_sort COLLATE NOCASE",
     "pubdate": "b.pubdate",
     "timestamp": "b.timestamp",
     "last_modified": "b.last_modified",
+    "rating": RATING_COLUMN,
 }
 DATE_COLUMNS = {
     "pubdate": "b.pubdate",
@@ -33,6 +44,31 @@ def parse_list(value, separator="\x1f"):
     if not value:
         return []
     return [item for item in value.split(separator) if item]
+
+
+def rating_to_stars(value):
+    if value is None:
+        return None
+    stars = value / 2
+    if value % 2 == 0:
+        return int(stars)
+    return stars
+
+
+def parse_stars(value, option_name):
+    if value is None:
+        return None
+    try:
+        stars = float(value)
+    except ValueError:
+        raise ValueError(f"{option_name} must be a number from 0 to 5")
+    if stars < 0 or stars > 5:
+        raise ValueError(f"{option_name} must be between 0 and 5")
+
+    raw_rating = stars * 2
+    if raw_rating != round(raw_rating):
+        raise ValueError(f"{option_name} must be in half-star increments")
+    return int(round(raw_rating))
 
 
 def validate_date(value, option_name):
@@ -60,6 +96,12 @@ def list_books(
     date_field="pubdate",
     from_date=None,
     to_date=None,
+    stars=None,
+    min_stars=None,
+    max_stars=None,
+    rated=False,
+    unrated=False,
+    count=False,
 ):
     if not os.path.exists(db_path):
         return emit_error(f"DB not found: {db_path}", "DB_NOT_FOUND", 2)
@@ -95,6 +137,21 @@ def list_books(
         return emit_error(str(e), "INVALID_DATE", 2)
     if from_date and to_date and from_date > to_date:
         return emit_error("--from-date must be on or before --to-date", "INVALID_DATE_RANGE", 2)
+
+    try:
+        stars = parse_stars(stars, "--stars")
+        min_stars = parse_stars(min_stars, "--min-stars")
+        max_stars = parse_stars(max_stars, "--max-stars")
+    except ValueError as e:
+        return emit_error(str(e), "INVALID_RATING", 2)
+    if stars is not None and (min_stars is not None or max_stars is not None):
+        return emit_error("--stars cannot be combined with --min-stars or --max-stars", "INVALID_RATING_FILTER", 2)
+    if min_stars is not None and max_stars is not None and min_stars > max_stars:
+        return emit_error("--min-stars must be less than or equal to --max-stars", "INVALID_RATING_RANGE", 2)
+    if rated and unrated:
+        return emit_error("--rated cannot be combined with --unrated", "INVALID_RATING_FILTER", 2)
+    if unrated and (stars is not None or min_stars is not None or max_stars is not None):
+        return emit_error("--unrated cannot be combined with star filters", "INVALID_RATING_FILTER", 2)
 
     where_clauses = []
     params = []
@@ -183,6 +240,20 @@ def list_books(
         where_clauses.append(f"date({date_column}) <= date(?)")
         params.append(to_date)
 
+    if stars is not None:
+        where_clauses.append(f"{RATING_COLUMN} = ?")
+        params.append(stars)
+    if min_stars is not None:
+        where_clauses.append(f"{RATING_COLUMN} >= ?")
+        params.append(min_stars)
+    if max_stars is not None:
+        where_clauses.append(f"{RATING_COLUMN} <= ?")
+        params.append(max_stars)
+    if rated:
+        where_clauses.append(f"{RATING_COLUMN} IS NOT NULL")
+    if unrated:
+        where_clauses.append(f"{RATING_COLUMN} IS NULL")
+
     where_sql = ""
     if where_clauses:
         where_sql = "WHERE " + " AND ".join(where_clauses)
@@ -193,6 +264,11 @@ def list_books(
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
     try:
+        if count:
+            cur.execute(f"SELECT COUNT(*) FROM books b {where_sql}", params)
+            print(json.dumps({"count": int(cur.fetchone()[0])}, indent=2))
+            return 0
+
         sql = f"""
             SELECT
                 b.id,
@@ -238,7 +314,8 @@ def list_books(
                         WHERE bpl.book = b.id
                         ORDER BY p.name
                     )
-                ) AS publishers
+                ) AS publishers,
+                {RATING_COLUMN} AS rating
             FROM books b
             {where_sql}
             ORDER BY {sort_column} {order_sql}, b.title COLLATE NOCASE ASC, b.id ASC
@@ -257,6 +334,8 @@ def list_books(
                 "formats": parse_list(r[6]),
                 "tags": parse_list(r[7]),
                 "publishers": parse_list(r[8]),
+                "rating": r[9],
+                "stars": rating_to_stars(r[9]),
             }
             for r in rows
         ]
@@ -270,7 +349,7 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser(description='List books from Calibre metadata.db')
     p.add_argument('--db-path', required=True, help='Path to metadata.db')
     p.add_argument('--limit', type=int, default=200)
-    p.add_argument('--sort', default='title', help='Sort by title, author, pubdate, timestamp, or last_modified')
+    p.add_argument('--sort', default='title', help='Sort by title, author, pubdate, timestamp, last_modified, or rating')
     p.add_argument('--order', default='asc', help='Sort order: asc or desc')
     p.add_argument('--query', help='Match title, author, tag, or publisher')
     p.add_argument('--author', help='Filter by author name')
@@ -280,6 +359,12 @@ if __name__ == '__main__':
     p.add_argument('--date-field', default='pubdate', help='Date field for date filters: pubdate, timestamp, or last_modified')
     p.add_argument('--from-date', help='Inclusive start date in YYYY-MM-DD format')
     p.add_argument('--to-date', help='Inclusive end date in YYYY-MM-DD format')
+    p.add_argument('--stars', help='Filter to an exact star rating from 0 to 5; half-star values like 4.5 are allowed')
+    p.add_argument('--min-stars', help='Filter to books with at least this many stars')
+    p.add_argument('--max-stars', help='Filter to books with at most this many stars')
+    p.add_argument('--rated', action='store_true', help='Only include books with a star rating')
+    p.add_argument('--unrated', action='store_true', help='Only include books without a star rating')
+    p.add_argument('--count', action='store_true', help='Return a JSON count instead of book rows')
     args = p.parse_args()
     sys.exit(list_books(
         args.db_path,
@@ -294,4 +379,10 @@ if __name__ == '__main__':
         args.date_field,
         args.from_date,
         args.to_date,
+        args.stars,
+        args.min_stars,
+        args.max_stars,
+        args.rated,
+        args.unrated,
+        args.count,
     ))

@@ -28,6 +28,19 @@
 | book | INTEGER |
 | author | INTEGER |
 
+### ratings
+| Column | Type | Description |
+|--------|------|-------------|
+| id | INTEGER | Primary key |
+| rating | INTEGER | Calibre rating from 0-10; divide by 2 for 0-5 stars |
+| link | TEXT | Optional external link |
+
+### books_ratings_link
+| Column | Type |
+|--------|------|
+| book | INTEGER |
+| rating | INTEGER |
+
 ### data (file formats)
 | Column | Type | Description |
 |--------|------|-------------|
@@ -39,6 +52,7 @@
 ### Other tables
 - `series`, `books_series_link` - Series info
 - `tags`, `books_tags_link` - Tags/categories
+- `ratings`, `books_ratings_link` - 0-5 star ratings stored internally as 0-10 integers
 - `publishers`, `books_publishers_link` - Publishers
 - `comments` - Book descriptions
 - `identifiers` - ISBN, etc.

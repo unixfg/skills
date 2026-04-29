@@ -1,7 +1,7 @@
 ---
 name: ebook-library
 description: >
-  Use this skill when the user asks to search or browse a Calibre ebook library. It helps find books by title/author/topic/date, locate file paths, and search inside EPUB/AZW3 text for quotes or passages.
+  Use this skill when the user asks to search or browse a Calibre ebook library. It helps find books by title/author/topic/date/rating, locate file paths, and search inside EPUB/AZW3 text for quotes or passages.
 
   Do not use this skill for conversion, metadata editing, downloads, recommendations, or non-Calibre sources.
 compatibility: >
@@ -51,6 +51,7 @@ test -r "$CALIBRE_FTS_DB" && echo "fts ok"
 
 - User asks for books by metadata (title, author, topic) → use `find_books.py`.
 - User asks for newest/latest/recent books or books by publication/added/modified date → use `list_books.py`.
+- User asks for top-rated books, star ratings, or counts by rating → use `list_books.py`.
 - User asks for a quote/passage (global or in one book) → use `search_content.py` (prefer `--book-id` when possible).
 - User asks for nearby context around a hit → use `get_excerpt.py`.
 - User asks for file path → use `resolve_book.py`.
@@ -155,8 +156,29 @@ python3 scripts/list_books.py \
   --to-date 2026-04-30
 ```
 
-Other useful filters: `--query`, `--author`, `--tag`, `--format`, and `--publisher`.
+Five top-rated books:
+
+```bash
+python3 scripts/list_books.py \
+  --db-path "$CALIBRE_METADATA_DB" \
+  --sort rating \
+  --order desc \
+  --rated \
+  --limit 5
+```
+
+Count five-star books:
+
+```bash
+python3 scripts/list_books.py \
+  --db-path "$CALIBRE_METADATA_DB" \
+  --stars 5 \
+  --count
+```
+
+Other useful filters: `--query`, `--author`, `--tag`, `--format`, `--publisher`, `--stars`, `--min-stars`, `--max-stars`, `--rated`, and `--unrated`.
 Use `--date-field timestamp` for Calibre-added/imported date and `--date-field last_modified` for modified date.
+Calibre stores ratings as 0-10 internally; `list_books.py` accepts and returns human-facing 0-5 `stars` values.
 
 ### Sanity-check database access
 
@@ -170,6 +192,8 @@ python3 scripts/inspect_calibre_metadata.py \
 
 - `find_books.py`, `list_books.py`, and `search_content.py` return `[]` for honest no-match cases.
 - For newest/latest/recent, use `list_books.py --sort pubdate --order desc` unless the user specifically asks for added/imported (`timestamp`) or modified (`last_modified`) date.
+- For top-rated, use `list_books.py --sort rating --order desc --rated --limit N`.
+- For "how many N-star books", use `list_books.py --stars N --count`.
 - Invalid book IDs return structured JSON errors such as `{"error": "Book 999 not found", "error_code": "BOOK_NOT_FOUND"}`.
 - Prefer `search_content.py --book-id ...` over global content search whenever possible.
 - When a hit needs proof, follow with `get_excerpt.py` and quote the returned snippet.

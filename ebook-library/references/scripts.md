@@ -175,7 +175,7 @@ If `exists` is `false`, the Calibre metadata is stale or the file moved.
 
 ## 6. `list_books.py` - Browse, filter, and sort books
 
-Useful when fuzzy title or author searches keep returning `[]`, or when the user asks for newest/recent books or books by date.
+Useful when fuzzy title or author searches keep returning `[]`, or when the user asks for newest/recent books, books by date, or rated books.
 
 ```bash
 python3 scripts/list_books.py \
@@ -196,7 +196,9 @@ Default output is alphabetical by title and includes:
     "last_modified": "2026-03-10 20:43:05.569779+00:00",
     "formats": ["EPUB", "TXT"],
     "tags": ["Knowledge", "Philosophy -- Introductions"],
-    "publishers": []
+    "publishers": [],
+    "rating": 10,
+    "stars": 5
   }
 ]
 ```
@@ -221,16 +223,40 @@ python3 scripts/list_books.py \
   --to-date 2026-04-30
 ```
 
+Five top-rated books:
+
+```bash
+python3 scripts/list_books.py \
+  --db-path "$CALIBRE_METADATA_DB" \
+  --sort rating \
+  --order desc \
+  --rated \
+  --limit 5
+```
+
+Count five-star books:
+
+```bash
+python3 scripts/list_books.py \
+  --db-path "$CALIBRE_METADATA_DB" \
+  --stars 5 \
+  --count
+```
+
 Supported options:
 
-- `--sort title|author|pubdate|timestamp|last_modified`
+- `--sort title|author|pubdate|timestamp|last_modified|rating`
 - `--order asc|desc`
 - `--query TEXT` matches title, author, tag, or publisher
 - `--author TEXT`, `--tag TEXT`, `--format FORMAT`, `--publisher TEXT`
 - `--date-field pubdate|timestamp|last_modified`
 - `--from-date YYYY-MM-DD`, `--to-date YYYY-MM-DD`
+- `--stars N`, `--min-stars N`, `--max-stars N` filter by 0-5 star values; half-star values such as `4.5` are accepted
+- `--rated`, `--unrated` filter by whether a book has a rating
+- `--count` returns `{"count": N}` instead of book rows
 
 Use `pubdate` for publication date, `timestamp` for Calibre-added/imported date, and `last_modified` for modified date.
+Calibre stores ratings internally as 0-10 integers; `rating` is that raw value, and `stars` is the human-facing 0-5 value.
 
 ## 7. `inspect_calibre_metadata.py` - Sanity-check metadata access
 
