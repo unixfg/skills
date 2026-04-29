@@ -1,0 +1,26 @@
+{
+  "context": "This scenario checks exact ISBN lookup against Open Library and source reporting.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "uses ISBN lookup",
+      "description": "Uses the bundled Open Library ISBN lookup path rather than a broad web search.",
+      "max_score": 25
+    },
+    {
+      "name": "correct metadata",
+      "description": "Reports title, author, publication year or date, and publisher fields that are present in Open Library data.",
+      "max_score": 30
+    },
+    {
+      "name": "source URL",
+      "description": "Includes an Open Library source URL such as an ISBN API, edition, or work URL.",
+      "max_score": 25
+    },
+    {
+      "name": "no unsupported claims",
+      "description": "Does not claim availability, downloadability, reviews, prices, or ownership in any collection.",
+      "max_score": 20
+    }
+  ]
+}

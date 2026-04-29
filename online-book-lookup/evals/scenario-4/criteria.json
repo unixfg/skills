@@ -1,0 +1,26 @@
+{
+  "context": "This scenario checks structured failure reporting for remote lookup failures.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "helper used",
+      "description": "Uses the bundled Open Library helper for the attempted lookup.",
+      "max_score": 25
+    },
+    {
+      "name": "structured error reported",
+      "description": "Reports the returned error and error_code without hiding the failure.",
+      "max_score": 35
+    },
+    {
+      "name": "no fallback fabrication",
+      "description": "Does not answer from memory as though it came from a verified Open Library result.",
+      "max_score": 30
+    },
+    {
+      "name": "scope preserved",
+      "description": "Does not introduce shopping, review, or download flows while handling the error.",
+      "max_score": 10
+    }
+  ]
+}

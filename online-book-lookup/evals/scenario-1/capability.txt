@@ -1,0 +1,1 @@
+Look up an exact book record from Open Library by ISBN and return sourced bibliographic metadata.

@@ -1,0 +1,26 @@
+{
+  "context": "This scenario checks structured title/author lookup and candidate handling.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "structured lookup",
+      "description": "Uses title and author parameters with the bundled helper.",
+      "max_score": 25
+    },
+    {
+      "name": "candidate list",
+      "description": "Returns several relevant Open Library candidates when available, preserving uncertainty where records differ.",
+      "max_score": 30
+    },
+    {
+      "name": "normalized fields",
+      "description": "Includes useful normalized fields such as authors, first publish year, identifiers, keys, covers, or source URLs.",
+      "max_score": 30
+    },
+    {
+      "name": "bounded scope",
+      "description": "Avoids recommendations, reviews, shopping, and download claims.",
+      "max_score": 15
+    }
+  ]
+}

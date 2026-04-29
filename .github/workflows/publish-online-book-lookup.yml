@@ -1,0 +1,21 @@
+name: Publish online-book-lookup
+
+permissions:
+  id-token: write
+  contents: read
+
+on:
+  push:
+    # Publish only from explicit release tags for this tile.
+    tags:
+      - "tessl-online-book-lookup-*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: tesslio/publish@main
+        with:
+          token: ${{ secrets.TESSL_API_TOKEN }}
+          path: "./online-book-lookup"

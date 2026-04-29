@@ -1,0 +1,1 @@
+Report Open Library no-result responses honestly without fabricating book metadata.

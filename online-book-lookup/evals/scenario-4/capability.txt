@@ -1,0 +1,1 @@
+Report Open Library network or API failures as structured lookup errors without fabricating fallback metadata.
