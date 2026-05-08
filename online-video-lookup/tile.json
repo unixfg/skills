@@ -1,0 +1,11 @@
+{
+  "name": "jobe-skills/online-video-lookup",
+  "version": "1.0.0",
+  "private": false,
+  "summary": "Look up online movie and TV reference metadata from Wikipedia plus optional TMDB and TVDB APIs, including source URLs, external IDs, and TMDB trailers without scraping IMDb.",
+  "skills": {
+    "online-video-lookup": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "jobe-skills/plex-music-library",
+  "version": "1.0.0",
+  "private": false,
+  "summary": "Search read-only Plex music library metadata, including local artist, album, and track availability, listened state, genres, GUIDs, release dates, and library locations.",
+  "skills": {
+    "plex-music-library": {
+      "path": "SKILL.md"
+    }
+  }
+}

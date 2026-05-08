@@ -1,0 +1,11 @@
+{
+  "name": "jobe-skills/online-music-lookup",
+  "version": "1.0.0",
+  "private": false,
+  "summary": "Look up online music reference metadata from Wikipedia and MusicBrainz public search for artists, releases, release groups, and recordings, with OAuth readiness reported but not required.",
+  "skills": {
+    "online-music-lookup": {
+      "path": "SKILL.md"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "jobe-skills/plex-media-library",
+  "version": "1.0.0",
+  "private": false,
+  "summary": "Search read-only Plex movie and TV library metadata, including local availability, watched state, GUIDs, years, library sections, and file/library locations.",
+  "skills": {
+    "plex-media-library": {
+      "path": "SKILL.md"
+    }
+  }
+}
