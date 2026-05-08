@@ -1,0 +1,11 @@
+{
+  "name": "unixfg/openclaw-vault",
+  "version": "0.1.0",
+  "private": false,
+  "summary": "Operate a local HashiCorp Vault used by OpenClaw for KV v2 secrets without exposing tokens or host-specific configuration.",
+  "skills": {
+    "openclaw-vault": {
+      "path": "SKILL.md"
+    }
+  }
+}
