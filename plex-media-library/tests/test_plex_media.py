@@ -7,7 +7,7 @@ import sys
 import unittest
 from pathlib import Path
 from unittest import mock
-from urllib import error
+from urllib import error, parse
 
 
 SCRIPT_DIR = Path(__file__).resolve().parents[1] / "scripts"
@@ -94,6 +94,92 @@ class PlexMediaTests(unittest.TestCase):
         self.assertEqual("https://www.imdb.com/title/tt3230854/", item["source_urls"]["imdb"])
         self.assertEqual(["Science fiction"], item["genres"])
         self.assertEqual(["/TV/The Expanse"], item["locations"])
+
+    def test_search_media_rejects_wildcard_before_network(self):
+        with mock.patch.object(plex_media.request, "urlopen") as urlopen:
+            with self.assertRaises(plex_media.ScriptError) as ctx:
+                plex_media.search_media("*", "tv", 5)
+
+        self.assertEqual("INVALID_ARGUMENT", ctx.exception.error_code)
+        self.assertIn("list_media.py", str(ctx.exception))
+        urlopen.assert_not_called()
+
+    def test_section_discovery_finds_tv_library(self):
+        payload = {
+            "MediaContainer": {
+                "Directory": [
+                    {"key": "1", "type": "movie", "title": "Movies"},
+                    {"key": "2", "type": "show", "title": "TV Shows"},
+                ]
+            }
+        }
+
+        sections = plex_media.extract_sections(payload)
+        section = plex_media.find_library_section(sections, "show")
+
+        self.assertEqual("2", section["key"])
+        self.assertEqual("TV Shows", section["title"])
+
+    def test_latest_episodes_uses_section_browse_not_search(self):
+        sections = {
+            "MediaContainer": {
+                "Directory": [
+                    {"key": "1", "type": "movie", "title": "Movies"},
+                    {"key": "2", "type": "show", "title": "TV Shows"},
+                ]
+            }
+        }
+        episodes = {
+            "MediaContainer": {
+                "Metadata": [
+                    {
+                        "ratingKey": "99",
+                        "type": "episode",
+                        "title": "One Way Out",
+                        "grandparentTitle": "Andor",
+                        "parentTitle": "Season 1",
+                        "parentIndex": "1",
+                        "index": "10",
+                        "originallyAvailableAt": "2022-11-09",
+                        "addedAt": "1700000000",
+                        "librarySectionID": 2,
+                        "librarySectionTitle": "TV Shows",
+                    }
+                ]
+            }
+        }
+        seen_urls = []
+
+        def fake_urlopen(req, timeout):
+            seen_urls.append(req.full_url)
+            if req.full_url.endswith("/library/sections"):
+                return FakeResponse(sections)
+            if "/library/sections/2/all?" in req.full_url:
+                return FakeResponse(episodes)
+            raise AssertionError(req.full_url)
+
+        env = {"PLEX_BASE_URL": "http://plex.local:32400", "PLEX_TOKEN": "token"}
+        with mock.patch.dict(plex_media.os.environ, env, clear=True):
+            with mock.patch.object(plex_media.request, "urlopen", side_effect=fake_urlopen):
+                result = plex_media.list_media("tv", None, 5, latest_episodes=True)
+
+        self.assertFalse(any("/library/search" in url for url in seen_urls))
+        browse_url = next(url for url in seen_urls if "/library/sections/2/all?" in url)
+        query = parse.parse_qs(parse.urlparse(browse_url).query)
+        self.assertEqual(["4"], query["type"])
+        self.assertEqual(["originallyAvailableAt:desc"], query["sort"])
+        self.assertEqual(["5"], query["X-Plex-Container-Size"])
+        self.assertEqual("media_list", result["lookup_type"])
+        self.assertEqual("episode", result["query"]["type"])
+        self.assertEqual("2", result["query"]["section_key"])
+        self.assertEqual("TV Shows", result["query"]["section_title"])
+        self.assertTrue(result["query"]["latest_episodes"])
+        item = result["results"][0]
+        self.assertEqual("Andor", item["grandparent_title"])
+        self.assertEqual("Season 1", item["parent_title"])
+        self.assertEqual(1, item["season_index"])
+        self.assertEqual(10, item["episode_index"])
+        self.assertEqual(1700000000, item["added_at"])
 
     def test_get_media_fetches_children_when_requested(self):
         detail = {

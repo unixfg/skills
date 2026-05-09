@@ -20,6 +20,13 @@ DEFAULT_TIMEOUT = 15.0
 DEFAULT_CLIENT_IDENTIFIER = "librarian-bot-plex-media-library"
 USER_AGENT = "plex-media-library/1.0.0"
 VIDEO_TYPES = {"movie", "show", "season", "episode"}
+PLEX_LIBRARY_TYPES = {
+    "movie": {"section_type": "movie", "item_type": 1},
+    "show": {"section_type": "show", "item_type": 2},
+    "tv": {"section_type": "show", "item_type": 2},
+    "season": {"section_type": "show", "item_type": 3},
+    "episode": {"section_type": "show", "item_type": 4},
+}
 GUID_RE = re.compile(r"^(?P<source>[A-Za-z0-9_.-]+)://(?P<id>[A-Za-z0-9_.:-]+)$")
 IMDB_RE = re.compile(r"^tt\d+$")
 
@@ -256,6 +263,15 @@ def tag_names(metadata: dict[str, Any], key: str) -> list[str]:
     return names[:20]
 
 
+def optional_int(value: Any) -> int | None:
+    if isinstance(value, bool) or value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def normalize_media(metadata: dict[str, Any]) -> dict[str, Any]:
     external_ids, source_urls = parse_external_ids(metadata)
     media_type = compact_text(metadata.get("type"))
@@ -274,10 +290,17 @@ def normalize_media(metadata: dict[str, Any]) -> dict[str, Any]:
         "rating": metadata.get("rating"),
         "audience_rating": metadata.get("audienceRating"),
         "originally_available_at": compact_text(metadata.get("originallyAvailableAt")),
+        "added_at": optional_int(metadata.get("addedAt")),
         "duration_ms": metadata.get("duration"),
         "view_count": metadata.get("viewCount", 0),
         "last_viewed_at": metadata.get("lastViewedAt"),
         "watched": bool(metadata.get("viewCount") or metadata.get("lastViewedAt")),
+        "parent_title": compact_text(metadata.get("parentTitle")),
+        "grandparent_title": compact_text(metadata.get("grandparentTitle")),
+        "parent_rating_key": compact_text(metadata.get("parentRatingKey")),
+        "grandparent_rating_key": compact_text(metadata.get("grandparentRatingKey")),
+        "season_index": optional_int(metadata.get("parentIndex")),
+        "episode_index": optional_int(metadata.get("index")),
         "child_count": metadata.get("childCount"),
         "season_count": metadata.get("seasonCount"),
         "leaf_count": metadata.get("leafCount"),
@@ -305,10 +328,40 @@ def extract_metadata(payload: dict[str, Any]) -> list[dict[str, Any]]:
     return metadata
 
 
+def extract_sections(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    container = payload.get("MediaContainer")
+    if not isinstance(container, dict):
+        return []
+    sections = []
+    for section in list_of_dicts(container.get("Directory")):
+        section_key = compact_text(section.get("key"))
+        section_type = compact_text(section.get("type"))
+        section_title = compact_text(section.get("title"))
+        if section_key and section_type:
+            sections.append({"key": section_key, "type": section_type, "title": section_title})
+    return sections
+
+
+def find_library_section(sections: list[dict[str, Any]], section_type: str) -> dict[str, Any]:
+    for section in sections:
+        if section.get("type") == section_type:
+            return section
+    raise ScriptError(
+        f"No Plex library section with type '{section_type}' was found",
+        error_code="NOT_FOUND",
+        return_code=4,
+    )
+
+
 def search_media(query: str, media_type: str, limit: int, timeout: float | None = None) -> dict[str, Any]:
     query = (query or "").strip()
     if not query:
         raise ScriptError("--query is required", error_code="INVALID_ARGUMENT")
+    if query == "*":
+        raise ScriptError(
+            '--query "*" is not an all-items search; use scripts/list_media.py for wildcard, latest, or broad inventory questions',
+            error_code="INVALID_ARGUMENT",
+        )
     limit = validate_limit(limit)
     settings = load_settings(timeout)
     search_types = "movies,tv"
@@ -341,6 +394,58 @@ def search_media(query: str, media_type: str, limit: int, timeout: float | None 
         "source": "Plex",
         "lookup_type": "media_search",
         "query": {"query": query, "type": media_type},
+        "num_found": len(results),
+        "results": results,
+    }
+
+
+def list_media(
+    media_type: str,
+    sort: str | None,
+    limit: int,
+    latest_episodes: bool = False,
+    timeout: float | None = None,
+) -> dict[str, Any]:
+    if media_type not in PLEX_LIBRARY_TYPES:
+        raise ScriptError(
+            "--type must be one of movie, tv, show, season, episode",
+            error_code="INVALID_ARGUMENT",
+        )
+    limit = validate_limit(limit)
+    effective_type = "episode" if latest_episodes else media_type
+    type_info = PLEX_LIBRARY_TYPES[effective_type]
+    section_type = type_info["section_type"]
+    item_type = type_info["item_type"]
+    effective_sort = sort or ("originallyAvailableAt:desc" if latest_episodes else None)
+    settings = load_settings(timeout)
+
+    sections = extract_sections(fetch_json(settings, "/library/sections"))
+    section = find_library_section(sections, str(section_type))
+    section_key = str(section["key"])
+    params: dict[str, Any] = {
+        "type": item_type,
+        "X-Plex-Container-Size": limit,
+    }
+    if effective_sort:
+        params["sort"] = effective_sort
+    payload = fetch_json(settings, f"/library/sections/{section_key}/all", params)
+    results = []
+    for item in extract_metadata(payload):
+        normalized = normalize_media(item)
+        if normalized.get("type") in VIDEO_TYPES:
+            results.append(normalized)
+        if len(results) >= limit:
+            break
+    return {
+        "source": "Plex",
+        "lookup_type": "media_list",
+        "query": {
+            "type": effective_type,
+            "section_key": section_key,
+            "section_title": section.get("title"),
+            "sort": effective_sort,
+            "latest_episodes": latest_episodes,
+        },
         "num_found": len(results),
         "results": results,
     }

@@ -15,6 +15,9 @@ failure handling.
 - Default timeout is `15` seconds.
 - Requests send `Accept: application/json`, `X-Plex-Token`, and a stable
   `X-Plex-Client-Identifier`.
+- Use `search_media.py` for title searches. Use `list_media.py` for wildcard,
+  latest/newest TV, newest episode, recently added, and broad inventory
+  questions.
 
 ## `check_config.py`
 
@@ -49,6 +52,7 @@ Arguments:
 - `--type all|movie|tv|show`, default `all`.
 - `--limit`, default `5`, max `20`.
 - `--timeout`, default from env or `15`.
+- `--query "*"` returns `INVALID_ARGUMENT`; it is not an all-items search.
 
 Success payload:
 
@@ -68,6 +72,53 @@ Success payload:
       "watched": true,
       "external_ids": {"imdb": ["tt3230854"], "tvdb": ["280619"]},
       "source_urls": {"imdb": "https://www.imdb.com/title/tt3230854/"}
+    }
+  ]
+}
+```
+
+## `list_media.py`
+
+```bash
+python3 scripts/list_media.py --type episode --sort originallyAvailableAt:desc --limit 10
+python3 scripts/list_media.py --type tv --latest-episodes --limit 5
+python3 scripts/list_media.py --type episode --sort addedAt:desc --limit 10
+```
+
+Arguments:
+
+- `--type movie|tv|show|season|episode`, required.
+- `--latest-episodes` lists episodes from the TV library and defaults `--sort`
+  to `originallyAvailableAt:desc`.
+- `--sort`, optional Plex sort such as `originallyAvailableAt:desc` or
+  `addedAt:desc`.
+- `--limit`, default `5`, max `20`.
+- `--timeout`, default from env or `15`.
+
+Success payload:
+
+```json
+{
+  "source": "Plex",
+  "lookup_type": "media_list",
+  "query": {
+    "type": "episode",
+    "section_key": "2",
+    "section_title": "TV Shows",
+    "sort": "originallyAvailableAt:desc",
+    "latest_episodes": true
+  },
+  "num_found": 1,
+  "results": [
+    {
+      "title": "One Way Out",
+      "type": "episode",
+      "grandparent_title": "Andor",
+      "parent_title": "Season 1",
+      "season_index": 1,
+      "episode_index": 10,
+      "originally_available_at": "2022-11-09",
+      "added_at": 1700000000
     }
   ]
 }
