@@ -1,0 +1,1 @@
+Resolve a named book, then answer a term-definition question from scoped library content search evidence rather than metadata-only lookup.

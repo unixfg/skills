@@ -52,7 +52,8 @@ test -r "$CALIBRE_FTS_DB" && echo "fts ok"
 - User asks for books by metadata (title, author, topic) → use `find_books.py`.
 - User asks for newest/latest/recent books or books by publication/added/modified date → use `list_books.py`.
 - User asks for top-rated books, star ratings, or counts by rating → use `list_books.py`.
-- User asks for a quote/passage (global or in one book) → use `search_content.py` (prefer `--book-id` when possible).
+- User asks what an acronym or initialism stands for in a book or universe → use `get_excerpt.py` with a wide preceding context window (prefer `--book-id` when possible).
+- User asks a book content question about a term, character, organization, place, event, quote, passage, or in-universe reference → use `search_content.py` (prefer `--book-id` when possible).
 - User asks for nearby context around a hit → use `get_excerpt.py`.
 - User asks for file path → use `resolve_book.py`.
 - User asks to browse when search is vague → use `list_books.py`.
@@ -96,6 +97,40 @@ python3 scripts/search_content.py \
 ```
 
 Use this first when you already know the target `book_id`.
+
+### Answer a content question about a named book
+
+For questions like "I read TITLE, what is TERM?", "who is NAME in TITLE?",
+"where is PLACE?", or "what does ACRONYM mean in this universe?", use local
+book text as evidence before answering.
+
+1. Resolve the named title or author context with `find_books.py`.
+2. For acronym or initialism questions, use `get_excerpt.py --book-id ... --around TERM --before 12000 --after 2000` so the model can interpret explicit nearby text.
+3. If the wide excerpt does not contain enough evidence, retry with `--before 24000 --after 2000`, or try another occurrence with `--occurrence`.
+4. For other term questions, search the resolved record with `search_content.py --book-id ... --query ...`.
+5. Use `get_excerpt.py` when the returned snippet is too short to interpret.
+6. If title resolution fails, try a global `search_content.py` query for the
+   requested term before saying no local evidence was found.
+
+Do not treat a metadata miss as proof that the answer is unavailable when the
+question is asking about content inside books.
+
+### Answer an acronym or initialism question inside one known book
+
+```bash
+python3 scripts/get_excerpt.py \
+  --fts-db "$CALIBRE_FTS_DB" \
+  --metadata-db "$CALIBRE_METADATA_DB" \
+  --book-id 4 \
+  --around "I&I" \
+  --before 12000 \
+  --after 2000
+```
+
+Use this first when the user asks what initials stand for. The script only
+retrieves local text; use the returned excerpt to answer from explicit evidence.
+If the answer is not present, retry with `--before 24000 --after 2000` or use
+`--occurrence` to inspect another use of the term.
 
 ### Search for a phrase across the whole library
 
@@ -196,6 +231,9 @@ python3 scripts/inspect_calibre_metadata.py \
 - For "how many N-star books", use `list_books.py --stars N --count`.
 - Invalid book IDs return structured JSON errors such as `{"error": "Book 999 not found", "error_code": "BOOK_NOT_FOUND"}`.
 - Prefer `search_content.py --book-id ...` over global content search whenever possible.
+- For acronym and initialism questions, prefer `get_excerpt.py --book-id ... --around TERM --before 12000 --after 2000`.
+- `search_content.py` snippets are valid evidence for concise answers about book content.
+- `get_excerpt.py` excerpts are valid evidence for concise answers when they include explicit local text that answers the question.
 - When a hit needs proof, follow with `get_excerpt.py` and quote the returned snippet.
 - If you had to discover the library location, report the path you actually used.
 
@@ -203,12 +241,13 @@ python3 scripts/inspect_calibre_metadata.py \
 
 After the library discovery step, use the decision tree and common commands above. Apply these extra fallback rules only when the first pass does not resolve the task:
 
-1. If `find_books.py` returns no results, run `inspect_calibre_metadata.py` to confirm DB accessibility, then retry with a shorter or partial query.
-2. If a global phrase search returns no results, confirm the target with `inspect_calibre_metadata.py`, then retry with a narrower phrase.
-3. If `find_books.py` returns multiple plausible titles, run scoped `search_content.py` searches to disambiguate before choosing a candidate.
-4. If a hit needs proof, run `get_excerpt.py`; if it errors, retry with a broader search in the same source before concluding failure.
-5. If `resolve_book.py` returns `exists: false`, verify the `book_id` via `find_books.py`, then retry path resolution with the preferred format.
-6. Return transparent evidence fields: book id, title, author, method used, and snippet or path as appropriate.
+1. If `find_books.py` returns no results for a metadata/title request, run `inspect_calibre_metadata.py` to confirm DB accessibility, then retry with a shorter or partial query.
+2. If `find_books.py` returns no results for a content question, try a global `search_content.py` query for the requested term or phrase before concluding that local evidence is unavailable.
+3. If a global phrase search returns no results, confirm the target with `inspect_calibre_metadata.py`, then retry with a narrower phrase.
+4. If `find_books.py` returns multiple plausible titles, run scoped `search_content.py` searches to disambiguate before choosing a candidate.
+5. If a hit needs proof, run `get_excerpt.py`; if it errors, retry with a broader search in the same source before concluding failure.
+6. If `resolve_book.py` returns `exists: false`, verify the `book_id` via `find_books.py`, then retry path resolution with the preferred format.
+7. Return transparent evidence fields: book id, title, author, method used, and snippet or path as appropriate.
 
 ## Result handling
 

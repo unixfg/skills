@@ -5,6 +5,7 @@ Get an excerpt from a book around a specific keyword or at a position.
 Usage:
   get_excerpt.py --book-id 2525 --around "Abdulla" --chars 800
   get_excerpt.py --book-id 2525 --position 50000 --chars 1000
+  get_excerpt.py --book-id 2525 --around "I&I" --before 12000 --after 2000
 """
 import argparse
 import json
@@ -29,6 +30,8 @@ def get_excerpt(
     chars=800,
     occurrence=1,
     format_filter=None,
+    before_chars=None,
+    after_chars=None,
 ):
     if not os.path.exists(fts_db):
         return emit_error(f"FTS DB not found: {fts_db}", "DB_NOT_FOUND", 2)
@@ -38,6 +41,12 @@ def get_excerpt(
         return emit_error("Must specify --around or --position", "INVALID_ARGUMENT", 1)
     if occurrence < 1:
         return emit_error("Occurrence must be at least 1", "INVALID_ARGUMENT", 1)
+    if chars < 1:
+        return emit_error("Chars must be at least 1", "INVALID_ARGUMENT", 1)
+    if before_chars is not None and before_chars < 0:
+        return emit_error("Before must not be negative", "INVALID_ARGUMENT", 1)
+    if after_chars is not None and after_chars < 0:
+        return emit_error("After must not be negative", "INVALID_ARGUMENT", 1)
 
     fts_conn = sqlite3.connect(fts_db)
     meta_conn = sqlite3.connect(metadata_db)
@@ -109,14 +118,28 @@ def get_excerpt(
                 return emit_error(f"Position {position} is outside the book text", "POSITION_OUT_OF_RANGE", 1)
             pos = position
 
+        if before_chars is not None or after_chars is not None:
+            before = before_chars or 0
+            after = after_chars or 0
+            term_length = len(around) if around else 0
+            start_position = max(0, pos - before)
+            end_position = min(text_len, pos + term_length + after)
+            excerpt = text[start_position:end_position].strip()
+        else:
+            start_position = max(0, pos - chars // 2)
+            end_position = min(text_len, start_position + chars)
+            excerpt = build_excerpt(text, pos, chars)
+
         result = {
             "book_id": book_id,
             "title": title,
             "authors": authors,
             "format": selected_format,
             "position": pos,
+            "start_position": start_position,
+            "end_position": end_position,
             "total_length": text_len,
-            "excerpt": build_excerpt(text, pos, chars),
+            "excerpt": excerpt,
         }
         print(json.dumps(result, indent=2, ensure_ascii=False))
         return 0
@@ -134,6 +157,8 @@ if __name__ == '__main__':
     p.add_argument('--position', type=int, help='Character position to center on')
     p.add_argument('--format', help='Prefer a specific format (for example EPUB)')
     p.add_argument('--chars', type=int, default=800, help='Excerpt length (default: 800)')
+    p.add_argument('--before', type=int, help='Characters to include before the match or position')
+    p.add_argument('--after', type=int, help='Characters to include after the match or position')
     p.add_argument('--occurrence', type=int, default=1, help='Which occurrence of keyword (default: 1)')
     args = p.parse_args()
     sys.exit(
@@ -146,5 +171,7 @@ if __name__ == '__main__':
             args.chars,
             args.occurrence,
             args.format,
+            args.before,
+            args.after,
         )
     )

@@ -1,0 +1,26 @@
+{
+  "context": "This scenario checks that named-book content questions resolve the title first and then search the book text for the requested term.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "title resolved from metadata",
+      "description": "Uses Calibre metadata lookup to identify 'Twenty Thousand Leagues under the Sea' by Jules Verne with book_id 1.",
+      "max_score": 25
+    },
+    {
+      "name": "scoped content search used",
+      "description": "Searches the resolved book text for 'Nautilus' using a scoped content search rather than relying on metadata or outside knowledge.",
+      "max_score": 35
+    },
+    {
+      "name": "content-backed answer",
+      "description": "Answers what the term refers to based on returned local text evidence and does not invent unsupported details.",
+      "max_score": 25
+    },
+    {
+      "name": "evidence snippet",
+      "description": "Includes a short snippet from the scoped library content search that supports the answer.",
+      "max_score": 15
+    }
+  ]
+}

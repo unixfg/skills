@@ -119,12 +119,27 @@ python3 scripts/get_excerpt.py \
 
 Optional: add `--format EPUB` to keep the excerpt aligned with a specific content search result.
 
+For acronym or initialism questions, use a wide preceding context window so the model can interpret explicit local text:
+
+```bash
+python3 scripts/get_excerpt.py \
+  --fts-db "$CALIBRE_FTS_DB" \
+  --metadata-db "$CALIBRE_METADATA_DB" \
+  --book-id 4 \
+  --around "I&I" \
+  --before 12000 \
+  --after 2000
+```
+
 Options:
 
 - `--around "keyword"` centers the excerpt on the first occurrence
 - `--occurrence N` uses the Nth occurrence instead of the first
 - `--position N` centers on a character position
 - `--chars N` sets excerpt length, default `800`
+- `--before N` and `--after N` use an explicit asymmetric window instead of centered `--chars`
+
+The successful response includes `position`, `start_position`, `end_position`, and the chosen `format`.
 
 Common failures are JSON objects like:
 
@@ -139,8 +154,6 @@ Common failures are JSON objects like:
 ```json
 {"error": "Keyword 'X' not found in book", "error_code": "KEYWORD_NOT_FOUND", "book_id": 4, "title": "The Problems of Philosophy"}
 ```
-
-The successful response also includes the chosen `format`.
 
 ## 4. `query-book.sh` - One-liner wrapper
 

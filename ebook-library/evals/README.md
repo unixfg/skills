@@ -30,12 +30,13 @@ Why this library works well:
 - includes mixed-quality placeholder/variant files to test path-only shortcutting
 - small enough for quick, repeatable scoring
 
-Scenario coverage in this eval set (4 total):
+Scenario coverage in this eval set (5 total):
 
 1. content-driven identification without title-path clues
 2. path-trap/global content match in a mixed library
 3. honest no-result handling (must not hallucinate)
 4. metadata-first file path resolution without guessing from folder names
+5. named-book content questions answered from scoped full-text evidence
 
 Each scenario assumes the agent can use the skill's bundled scripts and point them at the sample library when needed.
 
