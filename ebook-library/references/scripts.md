@@ -43,9 +43,9 @@ find "$HOME" -name full-text-search.db 2>/dev/null
 - `list_books.py`
 - `inspect_calibre_metadata.py`
 
-## 1. `find_books.py` - Search by title or author
+## 1. `find_books.py` - Search by title, author, or series
 
-Fast path for title and author lookup. Typical runtime is under 0.1s.
+Fast path for title, author, and series lookup. Typical runtime is under 0.1s.
 
 ```bash
 python3 scripts/find_books.py \
@@ -64,7 +64,9 @@ Typical output:
     "authors": "Bertrand Russell",
     "pubdate": "2004-06-02 00:00:00+00:00",
     "timestamp": "2026-03-10 20:25:41.246772+00:00",
-    "last_modified": "2026-03-10 20:43:05.569779+00:00"
+    "last_modified": "2026-03-10 20:43:05.569779+00:00",
+    "series": null,
+    "series_index": null
   }
 ]
 ```
@@ -210,10 +212,22 @@ Default output is alphabetical by title and includes:
     "formats": ["EPUB", "TXT"],
     "tags": ["Knowledge", "Philosophy -- Introductions"],
     "publishers": [],
+    "series": null,
+    "series_index": null,
     "rating": 10,
     "stars": 5
   }
 ]
+```
+
+Series order:
+
+```bash
+python3 scripts/list_books.py \
+  --db-path "$CALIBRE_METADATA_DB" \
+  --series "Hench" \
+  --sort series_index \
+  --order asc
 ```
 
 Newest books by publication date:
@@ -258,10 +272,10 @@ python3 scripts/list_books.py \
 
 Supported options:
 
-- `--sort title|author|pubdate|timestamp|last_modified|rating`
+- `--sort title|author|pubdate|timestamp|last_modified|rating|series_index`
 - `--order asc|desc`
-- `--query TEXT` matches title, author, tag, or publisher
-- `--author TEXT`, `--tag TEXT`, `--format FORMAT`, `--publisher TEXT`
+- `--query TEXT` matches title, author, tag, publisher, or series
+- `--author TEXT`, `--tag TEXT`, `--format FORMAT`, `--publisher TEXT`, `--series TEXT`
 - `--date-field pubdate|timestamp|last_modified`
 - `--from-date YYYY-MM-DD`, `--to-date YYYY-MM-DD`
 - `--stars N`, `--min-stars N`, `--max-stars N` filter by 0-5 star values; half-star values such as `4.5` are accepted

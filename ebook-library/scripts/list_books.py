@@ -25,6 +25,7 @@ SORT_COLUMNS = {
     "timestamp": "b.timestamp",
     "last_modified": "b.last_modified",
     "rating": RATING_COLUMN,
+    "series_index": "b.series_index",
 }
 DATE_COLUMNS = {
     "pubdate": "b.pubdate",
@@ -102,6 +103,7 @@ def list_books(
     rated=False,
     unrated=False,
     count=False,
+    series=None,
 ):
     if not os.path.exists(db_path):
         return emit_error(f"DB not found: {db_path}", "DB_NOT_FOUND", 2)
@@ -180,10 +182,15 @@ def list_books(
                     JOIN publishers p ON p.id = bpl.publisher
                     WHERE bpl.book = b.id AND lower(p.name) LIKE ?
                 )
+                OR EXISTS (
+                    SELECT 1 FROM books_series_link bsl
+                    JOIN series s ON s.id = bsl.series
+                    WHERE bsl.book = b.id AND lower(s.name) LIKE ?
+                )
             )
             """
         )
-        params.extend([q, q, q, q])
+        params.extend([q, q, q, q, q])
 
     if author:
         where_clauses.append(
@@ -231,6 +238,18 @@ def list_books(
             """
         )
         params.append(like_filter(publisher))
+
+    if series:
+        where_clauses.append(
+            """
+            EXISTS (
+                SELECT 1 FROM books_series_link bsl
+                JOIN series s ON s.id = bsl.series
+                WHERE bsl.book = b.id AND lower(s.name) LIKE ?
+            )
+            """
+        )
+        params.append(like_filter(series))
 
     date_column = DATE_COLUMNS[date_field]
     if from_date:
@@ -315,6 +334,15 @@ def list_books(
                         ORDER BY p.name
                     )
                 ) AS publishers,
+                (
+                    SELECT s.name
+                    FROM books_series_link bsl
+                    JOIN series s ON s.id = bsl.series
+                    WHERE bsl.book = b.id
+                    ORDER BY bsl.id
+                    LIMIT 1
+                ) AS series,
+                b.series_index,
                 {RATING_COLUMN} AS rating
             FROM books b
             {where_sql}
@@ -334,8 +362,10 @@ def list_books(
                 "formats": parse_list(r[6]),
                 "tags": parse_list(r[7]),
                 "publishers": parse_list(r[8]),
-                "rating": r[9],
-                "stars": rating_to_stars(r[9]),
+                "series": r[9],
+                "series_index": r[10],
+                "rating": r[11],
+                "stars": rating_to_stars(r[11]),
             }
             for r in rows
         ]
@@ -349,13 +379,14 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser(description='List books from Calibre metadata.db')
     p.add_argument('--db-path', required=True, help='Path to metadata.db')
     p.add_argument('--limit', type=int, default=200)
-    p.add_argument('--sort', default='title', help='Sort by title, author, pubdate, timestamp, last_modified, or rating')
+    p.add_argument('--sort', default='title', help='Sort by title, author, pubdate, timestamp, last_modified, rating, or series_index')
     p.add_argument('--order', default='asc', help='Sort order: asc or desc')
-    p.add_argument('--query', help='Match title, author, tag, or publisher')
+    p.add_argument('--query', help='Match title, author, tag, publisher, or series')
     p.add_argument('--author', help='Filter by author name')
     p.add_argument('--tag', help='Filter by tag name')
     p.add_argument('--format', dest='format_filter', help='Filter by file format, such as EPUB or PDF')
     p.add_argument('--publisher', help='Filter by publisher name')
+    p.add_argument('--series', help='Filter by series name')
     p.add_argument('--date-field', default='pubdate', help='Date field for date filters: pubdate, timestamp, or last_modified')
     p.add_argument('--from-date', help='Inclusive start date in YYYY-MM-DD format')
     p.add_argument('--to-date', help='Inclusive end date in YYYY-MM-DD format')
@@ -385,4 +416,5 @@ if __name__ == '__main__':
         args.rated,
         args.unrated,
         args.count,
+        args.series,
     ))

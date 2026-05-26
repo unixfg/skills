@@ -52,7 +52,9 @@ test -r "$CALIBRE_FTS_DB" && echo "fts ok"
 - User asks for books by metadata (title, author, topic) → use `find_books.py`.
 - User asks for newest/latest/recent books or books by publication/added/modified date → use `list_books.py`.
 - User asks for top-rated books, star ratings, or counts by rating → use `list_books.py`.
+- User asks for the previous, next, first, or last book in a series → resolve the current title with `find_books.py`, then use `list_books.py --series ... --sort series_index --order asc`.
 - User asks what an acronym or initialism stands for in a book or universe → use `get_excerpt.py` with a wide preceding context window (prefer `--book-id` when possible).
+- User asks what something is called, including nickname, colloquialism, slang, or alliteration questions → use local text evidence that explicitly presents a name, label, colloquial term, or quoted expression; do not answer from merely descriptive wording.
 - User asks a book content question about a term, character, organization, place, event, quote, passage, or in-universe reference → use `search_content.py` (prefer `--book-id` when possible).
 - User asks for nearby context around a hit → use `get_excerpt.py`.
 - User asks for file path → use `resolve_book.py`.
@@ -81,7 +83,9 @@ Returns a JSON array like:
   "authors": "Frank Herbert",
   "pubdate": "1965-08-01 00:00:00+00:00",
   "timestamp": "2026-03-10 20:25:41.246772+00:00",
-  "last_modified": "2026-03-10 20:43:05.569779+00:00"
+  "last_modified": "2026-03-10 20:43:05.569779+00:00",
+  "series": "Dune",
+  "series_index": 1.0
 }]
 ```
 
@@ -107,13 +111,47 @@ book text as evidence before answering.
 1. Resolve the named title or author context with `find_books.py`.
 2. For acronym or initialism questions, use `get_excerpt.py --book-id ... --around TERM --before 12000 --after 2000` so the model can interpret explicit nearby text.
 3. If the wide excerpt does not contain enough evidence, retry with `--before 24000 --after 2000`, or try another occurrence with `--occurrence`.
-4. For other term questions, search the resolved record with `search_content.py --book-id ... --query ...`.
-5. Use `get_excerpt.py` when the returned snippet is too short to interpret.
-6. If title resolution fails, try a global `search_content.py` query for the
+4. For questions asking what something is called, including nickname, colloquialism, slang, or alliteration questions, do not answer from merely descriptive wording. Search for candidate words and use `get_excerpt.py` or alternate searches until local text explicitly presents a name, label, colloquial term, or quoted expression.
+5. For other term questions, search the resolved record with `search_content.py --book-id ... --query ...`.
+6. Use `get_excerpt.py` when the returned snippet is too short to interpret.
+7. If title resolution fails, try a global `search_content.py` query for the
    requested term before saying no local evidence was found.
 
 Do not treat a metadata miss as proof that the answer is unavailable when the
 question is asking about content inside books.
+
+### Resolve previous or next books in a series
+
+For follow-ups like "the previous book", "the first book", "the sequel", or
+"is it mentioned in the prior book?", use Calibre series metadata instead of
+title similarity.
+
+1. Resolve the current title from the current message, last answer, or session history:
+
+```bash
+python3 scripts/find_books.py \
+  --db-path "$CALIBRE_METADATA_DB" \
+  --query "Villain" \
+  --limit 5
+```
+
+2. If the matched row has `series` and `series_index`, list that series in order:
+
+```bash
+python3 scripts/list_books.py \
+  --db-path "$CALIBRE_METADATA_DB" \
+  --series "Hench" \
+  --sort series_index \
+  --order asc
+```
+
+3. Pick the adjacent row by `series_index`, then use that book's `id` for scoped
+   content searches.
+
+Do not substitute a title merely because it contains a similar word, such as
+matching "Starter Villain" as the previous book before "Villain". If the current
+book has no local series metadata, say that local series order is unavailable or
+ask for the intended title/series.
 
 ### Answer an acronym or initialism question inside one known book
 
@@ -211,7 +249,8 @@ python3 scripts/list_books.py \
   --count
 ```
 
-Other useful filters: `--query`, `--author`, `--tag`, `--format`, `--publisher`, `--stars`, `--min-stars`, `--max-stars`, `--rated`, and `--unrated`.
+Other useful filters: `--query`, `--author`, `--tag`, `--format`, `--publisher`, `--series`, `--stars`, `--min-stars`, `--max-stars`, `--rated`, and `--unrated`.
+Use `--sort series_index --series SERIES` for series order.
 Use `--date-field timestamp` for Calibre-added/imported date and `--date-field last_modified` for modified date.
 Calibre stores ratings as 0-10 internally; `list_books.py` accepts and returns human-facing 0-5 `stars` values.
 
@@ -229,11 +268,13 @@ python3 scripts/inspect_calibre_metadata.py \
 - For newest/latest/recent, use `list_books.py --sort pubdate --order desc` unless the user specifically asks for added/imported (`timestamp`) or modified (`last_modified`) date.
 - For top-rated, use `list_books.py --sort rating --order desc --rated --limit N`.
 - For "how many N-star books", use `list_books.py --stars N --count`.
+- For previous/next/first/last book in a series, use `find_books.py` series metadata plus `list_books.py --series SERIES --sort series_index --order asc`; do not guess from title similarity.
 - Invalid book IDs return structured JSON errors such as `{"error": "Book 999 not found", "error_code": "BOOK_NOT_FOUND"}`.
 - Prefer `search_content.py --book-id ...` over global content search whenever possible.
 - For acronym and initialism questions, prefer `get_excerpt.py --book-id ... --around TERM --before 12000 --after 2000`.
 - `search_content.py` snippets are valid evidence for concise answers about book content.
 - `get_excerpt.py` excerpts are valid evidence for concise answers when they include explicit local text that answers the question.
+- Do not treat a factual description as a nickname, colloquialism, slang, alliteration, or name unless local text explicitly presents it that way.
 - When a hit needs proof, follow with `get_excerpt.py` and quote the returned snippet.
 - If you had to discover the library location, report the path you actually used.
 

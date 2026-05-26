@@ -22,18 +22,21 @@ def search(db_path, query, limit=50):
     try:
         sql = (
             "SELECT b.id, b.title, group_concat(a.name, ', ') AS authors, "
-            "b.pubdate, b.timestamp, b.last_modified "
+            "b.pubdate, b.timestamp, b.last_modified, s.name AS series, b.series_index "
             "FROM books b LEFT JOIN books_authors_link bal ON bal.book=b.id "
             "LEFT JOIN authors a ON a.id=bal.author "
-            "WHERE lower(b.title) LIKE ? OR lower(a.name) LIKE ? "
+            "LEFT JOIN books_series_link bsl ON bsl.book=b.id "
+            "LEFT JOIN series s ON s.id=bsl.series "
+            "WHERE lower(b.title) LIKE ? OR lower(a.name) LIKE ? OR lower(s.name) LIKE ? "
             "GROUP BY b.id "
             "ORDER BY CASE "
             "WHEN lower(b.title) = ? THEN 0 "
             "WHEN lower(a.name) = ? THEN 1 "
-            "ELSE 2 END, b.title "
+            "WHEN lower(s.name) = ? THEN 2 "
+            "ELSE 3 END, b.title "
             "LIMIT ?"
         )
-        cur.execute(sql, (q, q, exact, exact, limit))
+        cur.execute(sql, (q, q, q, exact, exact, exact, limit))
         rows = cur.fetchall()
         out = []
         for r in rows:
@@ -44,6 +47,8 @@ def search(db_path, query, limit=50):
                 "pubdate": r[3],
                 "timestamp": r[4],
                 "last_modified": r[5],
+                "series": r[6],
+                "series_index": r[7],
             })
         print(json.dumps(out, indent=2, ensure_ascii=False))
         return 0
