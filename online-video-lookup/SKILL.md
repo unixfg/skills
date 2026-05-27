@@ -22,11 +22,13 @@ library. For local availability, use `plex-media-library` first.
 ## Workflow
 
 1. If the user asks what is in the local library, search Plex first.
-2. Use `lookup_video.py --query ...` for outside metadata or Plex no-match
+2. Use `list_video.py --list ...` for TMDB list questions such as trending,
+   popular, now-playing, upcoming, or top-rated movies and TV.
+3. Use `lookup_video.py --query ...` for outside metadata or Plex no-match
    fallback.
-3. Add `--type movie` or `--type tv` when the user gives the format.
-4. Add `--include-trailers` only when trailers are requested or useful.
-5. If TMDB or TVDB credentials are missing, report those sources as skipped;
+4. Add `--type movie` or `--type tv` when the user gives the format.
+5. Add `--include-trailers` only when trailers are requested or useful.
+6. If TMDB or TVDB credentials are missing, report those sources as skipped;
    Wikipedia results remain valid.
 
 ## Common commands
@@ -35,6 +37,12 @@ Search all configured sources:
 
 ```bash
 python3 scripts/lookup_video.py --query "The Leftovers" --type tv --limit 5
+```
+
+List trending movies from TMDB when configured:
+
+```bash
+python3 scripts/list_video.py --list trending --type movie --limit 5
 ```
 
 Find trailers from TMDB when configured:

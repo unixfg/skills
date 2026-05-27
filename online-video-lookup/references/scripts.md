@@ -66,6 +66,40 @@ Success payload:
 }
 ```
 
+## `list_video.py`
+
+```bash
+python3 scripts/list_video.py --list trending --type movie --limit 5
+```
+
+Arguments:
+
+- `--list trending|popular|now-playing|upcoming|top-rated`, required.
+- `--type all|movie|tv`, default `all`.
+- `--time-window day|week`, default `day`; used for `trending`.
+- `--region` optional TMDB region override for movie release-window lists.
+- `--include-trailers` fetches TMDB video metadata for TMDB results.
+- `--limit`, default `5`, max `10`.
+- `--timeout`, default `15`.
+
+Success payload:
+
+```json
+{
+  "source": "online-video-lookup",
+  "lookup_type": "tmdb_list",
+  "query": {"list": "trending", "type": "movie", "time_window": "day"},
+  "sources": {
+    "tmdb": {"available": true, "used": true, "num_found": 5}
+  },
+  "num_found": 5,
+  "results": []
+}
+```
+
+`now-playing` and `upcoming` are movie-release lists. Use `--type movie` or
+leave `--type all`; `--type tv` is rejected for those lists.
+
 ## Error codes
 
 - `INVALID_ARGUMENT`: invalid query, source, type, timeout, or year.

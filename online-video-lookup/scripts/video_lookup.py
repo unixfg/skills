@@ -39,6 +39,7 @@ class ScriptError(Exception):
 class Settings:
     tmdb_read_access_token: str | None
     tmdb_api_key: str | None
+    tmdb_region: str | None
     tvdb_api_key: str | None
     timeout: float
 
@@ -80,6 +81,7 @@ def load_settings(timeout: float | None = None) -> Settings:
     return Settings(
         tmdb_read_access_token=(os.environ.get("TMDB_READ_ACCESS_TOKEN") or "").strip() or None,
         tmdb_api_key=(os.environ.get("TMDB_API_KEY") or "").strip() or None,
+        tmdb_region=(os.environ.get("TMDB_REGION") or "").strip() or None,
         tvdb_api_key=(os.environ.get("TVDB_API_KEY") or "").strip() or None,
         timeout=timeout_value,
     )
@@ -94,6 +96,7 @@ def build_validation_report(settings: Settings) -> dict[str, Any]:
                 "available": bool(settings.tmdb_read_access_token or settings.tmdb_api_key),
                 "required": False,
                 "auth": "bearer" if settings.tmdb_read_access_token else ("api_key" if settings.tmdb_api_key else None),
+                "region": settings.tmdb_region,
             },
             "tvdb": {
                 "available": bool(settings.tvdb_api_key),
@@ -358,6 +361,107 @@ def tmdb_search(settings: Settings, query: str, media_type: str, year: int | Non
             if len(results) >= limit:
                 return results
     return results[:limit]
+
+
+def normalize_list_type(value: str) -> str:
+    return value.strip().lower().replace("_", "-")
+
+
+def tmdb_list_requests(list_type: str, media_type: str, time_window: str) -> list[tuple[str, str | None]]:
+    if list_type == "trending":
+        return [(f"/trending/{media_type}/{time_window}", None if media_type == "all" else media_type)]
+    if list_type == "popular":
+        media_types = ["movie", "tv"] if media_type == "all" else [media_type]
+        return [(f"/{current_type}/popular", current_type) for current_type in media_types]
+    if list_type == "top-rated":
+        media_types = ["movie", "tv"] if media_type == "all" else [media_type]
+        return [(f"/{current_type}/top_rated", current_type) for current_type in media_types]
+    if list_type == "now-playing":
+        if media_type == "tv":
+            raise ScriptError("--list now-playing supports --type movie or all", error_code="INVALID_ARGUMENT")
+        return [("/movie/now_playing", "movie")]
+    if list_type == "upcoming":
+        if media_type == "tv":
+            raise ScriptError("--list upcoming supports --type movie or all", error_code="INVALID_ARGUMENT")
+        return [("/movie/upcoming", "movie")]
+    raise ScriptError(
+        "--list must be one of trending, popular, now-playing, upcoming, top-rated",
+        error_code="INVALID_ARGUMENT",
+    )
+
+
+def tmdb_list(
+    settings: Settings,
+    list_type: str,
+    media_type: str,
+    time_window: str,
+    region: str | None,
+    limit: int,
+    include_trailers: bool,
+) -> list[dict[str, Any]]:
+    if not tmdb_available(settings):
+        return []
+    requests = tmdb_list_requests(list_type, media_type, time_window)
+    effective_region = compact_text(region) or settings.tmdb_region
+    results = []
+    for path, forced_type in requests:
+        params: dict[str, Any] = {"language": "en-US", "page": 1}
+        if effective_region and path in ("/movie/now_playing", "/movie/upcoming"):
+            params["region"] = effective_region
+        payload = request_json(
+            tmdb_url(path, settings, params),
+            timeout=settings.timeout,
+            headers=tmdb_headers(settings),
+        )
+        for item in list_of_dicts(payload.get("results")):
+            current_type = forced_type or compact_text(item.get("media_type"))
+            if current_type not in ("movie", "tv"):
+                continue
+            tmdb_id = item.get("id")
+            details = None
+            if include_trailers and isinstance(tmdb_id, int):
+                details = tmdb_details(settings, current_type, tmdb_id, include_trailers)
+            results.append(normalize_tmdb(item, current_type, details, include_trailers))
+            if len(results) >= limit:
+                return results
+    return results[:limit]
+
+
+def list_video(
+    list_type: str,
+    media_type: str,
+    time_window: str,
+    region: str | None,
+    include_trailers: bool,
+    limit: int,
+    timeout: float | None = None,
+) -> dict[str, Any]:
+    list_type = normalize_list_type(list_type)
+    if media_type not in ("all", "movie", "tv"):
+        raise ScriptError("--type must be one of all, movie, tv", error_code="INVALID_ARGUMENT")
+    if time_window not in ("day", "week"):
+        raise ScriptError("--time-window must be one of day, week", error_code="INVALID_ARGUMENT")
+    limit = validate_limit(limit)
+    settings = load_settings(timeout)
+
+    if not tmdb_available(settings):
+        raise ScriptError("TMDB_READ_ACCESS_TOKEN or TMDB_API_KEY is required for TMDB lists", error_code="CONFIG_ERROR")
+
+    results = tmdb_list(settings, list_type, media_type, time_window, region, limit, include_trailers)
+    return {
+        "source": "online-video-lookup",
+        "lookup_type": "tmdb_list",
+        "query": {
+            "list": list_type,
+            "type": media_type,
+            "time_window": time_window,
+            "region": compact_text(region) or settings.tmdb_region,
+            "include_trailers": include_trailers,
+        },
+        "sources": {"tmdb": source_status(True, True, len(results))},
+        "num_found": len(results),
+        "results": results,
+    }
 
 
 def tvdb_available(settings: Settings) -> bool:

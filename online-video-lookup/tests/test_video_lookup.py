@@ -142,6 +142,57 @@ class VideoLookupTests(unittest.TestCase):
         self.assertEqual("tvdb-token", token)
         self.assertEqual({"apikey": "current-key"}, captured_body)
 
+    def test_tmdb_trending_movie_list_uses_tmdb_endpoint(self):
+        list_payload = {
+            "results": [
+                {
+                    "id": 99,
+                    "title": "Current Movie",
+                    "release_date": "2026-05-01",
+                    "overview": "Popular right now.",
+                    "vote_average": 7.4,
+                    "popularity": 123.0,
+                }
+            ]
+        }
+
+        with mock.patch.dict(video_lookup.os.environ, {"TMDB_READ_ACCESS_TOKEN": "token"}, clear=True):
+            with mock.patch.object(video_lookup.request, "urlopen", return_value=FakeResponse(list_payload)) as urlopen:
+                result = video_lookup.list_video("trending", "movie", "day", None, False, 5)
+
+        first_req = urlopen.call_args_list[0].args[0]
+        self.assertIn("/trending/movie/day?", first_req.full_url)
+        self.assertEqual("Bearer token", first_req.headers["Authorization"])
+        self.assertEqual("tmdb_list", result["lookup_type"])
+        self.assertEqual("trending", result["query"]["list"])
+        self.assertEqual("movie", result["query"]["type"])
+        self.assertEqual("TMDB", result["results"][0]["source"])
+        self.assertEqual("Current Movie", result["results"][0]["title"])
+
+    def test_tmdb_now_playing_list_uses_region_from_env(self):
+        list_payload = {"results": [{"id": 101, "title": "Regional Movie"}]}
+
+        with mock.patch.dict(
+            video_lookup.os.environ,
+            {"TMDB_API_KEY": "legacy-key", "TMDB_REGION": "US"},
+            clear=True,
+        ):
+            with mock.patch.object(video_lookup.request, "urlopen", return_value=FakeResponse(list_payload)) as urlopen:
+                result = video_lookup.list_video("now-playing", "all", "day", None, False, 5)
+
+        first_req = urlopen.call_args_list[0].args[0]
+        self.assertIn("/movie/now_playing?", first_req.full_url)
+        self.assertIn("region=US", first_req.full_url)
+        self.assertIn("api_key=legacy-key", first_req.full_url)
+        self.assertEqual("US", result["query"]["region"])
+
+    def test_tmdb_list_without_credentials_is_config_error(self):
+        with mock.patch.dict(video_lookup.os.environ, {}, clear=True):
+            with self.assertRaises(video_lookup.ScriptError) as ctx:
+                video_lookup.list_video("trending", "movie", "day", None, False, 5)
+
+        self.assertEqual("CONFIG_ERROR", ctx.exception.error_code)
+
     def test_invalid_json_is_structured_error(self):
         with mock.patch.object(video_lookup.request, "urlopen", return_value=FakeResponse(b"not-json")):
             with self.assertRaises(video_lookup.ScriptError) as ctx:
