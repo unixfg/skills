@@ -7,7 +7,7 @@ failure handling.
 
 - Wikipedia source: `https://en.wikipedia.org/w/api.php`.
 - Optional TMDB source: `TMDB_READ_ACCESS_TOKEN` preferred, or `TMDB_API_KEY`.
-- Optional TVDB source: `TVDB_API_KEY`, with optional `TVDB_PIN`.
+- Optional TVDB source: `TVDB_API_KEY`.
 - IMDb behavior: link IDs only from official metadata; no scraping.
 - Output: machine-readable JSON on stdout.
 - Errors include `error` and `error_code` and return non-zero.

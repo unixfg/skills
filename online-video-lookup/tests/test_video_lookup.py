@@ -44,6 +44,7 @@ class VideoLookupTests(unittest.TestCase):
         self.assertTrue(report["sources"]["wikipedia"]["available"])
         self.assertFalse(report["sources"]["tmdb"]["available"])
         self.assertEqual("link-only from official metadata; no scraping", report["sources"]["imdb"]["mode"])
+        self.assertNotIn("pin_configured", report["sources"]["tvdb"])
 
     def test_wikipedia_lookup_skips_unconfigured_optional_sources(self):
         wiki_payload = {
@@ -122,6 +123,24 @@ class VideoLookupTests(unittest.TestCase):
                 video_lookup.lookup_video("Star Wars", "movie", "tmdb", None, False, 5)
 
         self.assertEqual("CONFIG_ERROR", ctx.exception.error_code)
+
+    def test_tvdb_login_sends_api_key_without_legacy_pin(self):
+        captured_body = {}
+
+        def fake_urlopen(req, timeout):
+            captured_body.update(json.loads(req.data.decode("utf-8")))
+            return FakeResponse({"data": {"token": "tvdb-token"}})
+
+        env = {
+            "TVDB_API_KEY": "current-key",
+            "TVDB" + "_PIN": "legacy-pin",
+        }
+        with mock.patch.dict(video_lookup.os.environ, env, clear=True):
+            with mock.patch.object(video_lookup.request, "urlopen", side_effect=fake_urlopen):
+                token = video_lookup.tvdb_login(video_lookup.load_settings())
+
+        self.assertEqual("tvdb-token", token)
+        self.assertEqual({"apikey": "current-key"}, captured_body)
 
     def test_invalid_json_is_structured_error(self):
         with mock.patch.object(video_lookup.request, "urlopen", return_value=FakeResponse(b"not-json")):

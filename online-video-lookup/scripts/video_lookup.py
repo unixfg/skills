@@ -40,7 +40,6 @@ class Settings:
     tmdb_read_access_token: str | None
     tmdb_api_key: str | None
     tvdb_api_key: str | None
-    tvdb_pin: str | None
     timeout: float
 
 
@@ -82,7 +81,6 @@ def load_settings(timeout: float | None = None) -> Settings:
         tmdb_read_access_token=(os.environ.get("TMDB_READ_ACCESS_TOKEN") or "").strip() or None,
         tmdb_api_key=(os.environ.get("TMDB_API_KEY") or "").strip() or None,
         tvdb_api_key=(os.environ.get("TVDB_API_KEY") or "").strip() or None,
-        tvdb_pin=(os.environ.get("TVDB_PIN") or "").strip() or None,
         timeout=timeout_value,
     )
 
@@ -100,7 +98,6 @@ def build_validation_report(settings: Settings) -> dict[str, Any]:
             "tvdb": {
                 "available": bool(settings.tvdb_api_key),
                 "required": False,
-                "pin_configured": bool(settings.tvdb_pin),
             },
             "imdb": {
                 "available": False,
@@ -368,9 +365,7 @@ def tvdb_available(settings: Settings) -> bool:
 
 
 def tvdb_login(settings: Settings) -> str:
-    body: dict[str, Any] = {"apikey": settings.tvdb_api_key}
-    if settings.tvdb_pin:
-        body["pin"] = settings.tvdb_pin
+    body = {"apikey": settings.tvdb_api_key}
     payload = request_json(
         f"{TVDB_API}/login",
         timeout=settings.timeout,
