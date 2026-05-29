@@ -23,6 +23,8 @@ MAX_LIMIT = 10
 DEFAULT_TIMEOUT = 15.0
 USER_AGENT = "online-video-lookup/1.0.0 (https://github.com/unixfg/skills)"
 IMDB_RE = re.compile(r"^tt\d+$")
+IMDB_PERSON_RE = re.compile(r"\bnm\d+\b")
+TMDB_PERSON_URL_RE = re.compile(r"themoviedb\.org/person/(?P<id>\d+)", re.IGNORECASE)
 TAG_RE = re.compile(r"<[^>]+>")
 
 
@@ -258,6 +260,30 @@ def imdb_url(imdb_id: str | None) -> str | None:
     if imdb_id and IMDB_RE.fullmatch(imdb_id):
         return f"https://www.imdb.com/title/{imdb_id}/"
     return None
+
+
+def imdb_person_url(imdb_id: str | None) -> str | None:
+    if imdb_id and IMDB_PERSON_RE.fullmatch(imdb_id):
+        return f"https://www.imdb.com/name/{imdb_id}/"
+    return None
+
+
+def tmdb_person_source_url(person_id: Any) -> str | None:
+    if not isinstance(person_id, int):
+        return None
+    return f"https://www.themoviedb.org/person/{person_id}"
+
+
+def extract_imdb_person_id(query: str) -> str | None:
+    match = IMDB_PERSON_RE.search(query or "")
+    return match.group(0) if match else None
+
+
+def extract_tmdb_person_id(query: str) -> int | None:
+    match = TMDB_PERSON_URL_RE.search(query or "")
+    if not match:
+        return None
+    return int(match.group("id"))
 
 
 def normalize_trailers(videos_payload: Any) -> list[dict[str, Any]]:
@@ -545,6 +571,194 @@ def source_status(available: bool, used: bool, num_found: int = 0, skipped: str 
     if skipped:
         status["skipped"] = skipped
     return status
+
+
+def tmdb_person_search(settings: Settings, query: str, limit: int = 1) -> list[dict[str, Any]]:
+    if not tmdb_available(settings):
+        return []
+    payload = request_json(
+        tmdb_url(
+            "/search/person",
+            settings,
+            {
+                "query": query,
+                "include_adult": "false",
+                "language": "en-US",
+                "page": 1,
+            },
+        ),
+        timeout=settings.timeout,
+        headers=tmdb_headers(settings),
+    )
+    return list_of_dicts(payload.get("results"))[:limit]
+
+
+def tmdb_person_find_by_imdb(settings: Settings, imdb_id: str) -> list[dict[str, Any]]:
+    if not tmdb_available(settings):
+        return []
+    payload = request_json(
+        tmdb_url(
+            f"/find/{parse.quote(imdb_id)}",
+            settings,
+            {"external_source": "imdb_id", "language": "en-US"},
+        ),
+        timeout=settings.timeout,
+        headers=tmdb_headers(settings),
+    )
+    return list_of_dicts(payload.get("person_results"))
+
+
+def tmdb_person_details(settings: Settings, person_id: int) -> dict[str, Any]:
+    return request_json(
+        tmdb_url(
+            f"/person/{person_id}",
+            settings,
+            {
+                "language": "en-US",
+                "append_to_response": "external_ids,movie_credits,tv_credits",
+            },
+        ),
+        timeout=settings.timeout,
+        headers=tmdb_headers(settings),
+    )
+
+
+def normalize_tmdb_person(details: dict[str, Any]) -> dict[str, Any]:
+    external_ids = details.get("external_ids", {}) if isinstance(details.get("external_ids"), dict) else {}
+    imdb_id = compact_text(external_ids.get("imdb_id"))
+    source_urls = {"tmdb": tmdb_person_source_url(details.get("id"))}
+    imdb_link = imdb_person_url(imdb_id)
+    if imdb_link:
+        source_urls["imdb"] = imdb_link
+    person = {
+        "source": "TMDB",
+        "name": compact_text(details.get("name")),
+        "tmdb_id": details.get("id"),
+        "known_for_department": compact_text(details.get("known_for_department")),
+        "birthday": compact_text(details.get("birthday")),
+        "deathday": compact_text(details.get("deathday")),
+        "external_ids": {"imdb": [imdb_id] if imdb_id else []},
+        "source_urls": source_urls,
+    }
+    return {key: value for key, value in person.items() if value not in (None, "", [], {})}
+
+
+def normalize_tmdb_person_credit(
+    item: dict[str, Any], media_type: str, credit_type: str
+) -> dict[str, Any]:
+    title = compact_text(item.get("title") or item.get("name"))
+    date = compact_text(item.get("release_date") or item.get("first_air_date"))
+    role = compact_text(item.get("character") if credit_type == "cast" else item.get("job"))
+    source_urls = {"tmdb": tmdb_source_url(media_type, item.get("id"))}
+    result = {
+        "source": "TMDB",
+        "title": title,
+        "original_title": compact_text(item.get("original_title") or item.get("original_name")),
+        "type": media_type,
+        "tmdb_id": item.get("id"),
+        "year": first_year(date),
+        "release_date": date,
+        "credit_type": credit_type,
+        "role": role,
+        "department": compact_text(item.get("department")),
+        "summary": compact_text(item.get("overview")),
+        "source_urls": source_urls,
+    }
+    return {key: value for key, value in result.items() if value not in (None, "", [], {})}
+
+
+def tmdb_person_credits(
+    details: dict[str, Any], media_type: str, credit_type: str, limit: int
+) -> list[dict[str, Any]]:
+    media_types = ["movie", "tv"] if media_type == "all" else [media_type]
+    credit_types = ["cast", "crew"] if credit_type == "all" else [credit_type]
+    credits = []
+    seen: set[tuple[Any, ...]] = set()
+    for current_media_type in media_types:
+        payload_key = f"{current_media_type}_credits"
+        payload = details.get(payload_key)
+        if not isinstance(payload, dict):
+            continue
+        for current_credit_type in credit_types:
+            for item in list_of_dicts(payload.get(current_credit_type)):
+                normalized = normalize_tmdb_person_credit(
+                    item, current_media_type, current_credit_type
+                )
+                if not normalized.get("title"):
+                    continue
+                key = (
+                    normalized.get("type"),
+                    normalized.get("tmdb_id"),
+                    normalized.get("credit_type"),
+                    normalized.get("role"),
+                )
+                if key in seen:
+                    continue
+                seen.add(key)
+                credits.append(normalized)
+    credits.sort(
+        key=lambda item: (
+            str(item.get("release_date") or ""),
+            str(item.get("title") or ""),
+        ),
+        reverse=True,
+    )
+    return credits[:limit]
+
+
+def lookup_person(
+    query: str,
+    media_type: str,
+    credit_type: str,
+    limit: int,
+    timeout: float | None = None,
+) -> dict[str, Any]:
+    query = (query or "").strip()
+    if not query:
+        raise ScriptError("--query is required", error_code="INVALID_ARGUMENT")
+    if media_type not in ("all", "movie", "tv"):
+        raise ScriptError("--type must be one of all, movie, tv", error_code="INVALID_ARGUMENT")
+    if credit_type not in ("all", "cast", "crew"):
+        raise ScriptError("--credit must be one of all, cast, crew", error_code="INVALID_ARGUMENT")
+    limit = validate_limit(limit)
+    settings = load_settings(timeout)
+    if not tmdb_available(settings):
+        raise ScriptError(
+            "TMDB_READ_ACCESS_TOKEN or TMDB_API_KEY is required for person lookup",
+            error_code="CONFIG_ERROR",
+        )
+
+    tmdb_person_id = extract_tmdb_person_id(query)
+    imdb_person_id = extract_imdb_person_id(query)
+    candidates: list[dict[str, Any]]
+    if tmdb_person_id is not None:
+        candidates = [{"id": tmdb_person_id}]
+    elif imdb_person_id:
+        candidates = tmdb_person_find_by_imdb(settings, imdb_person_id)
+    else:
+        candidates = tmdb_person_search(settings, query, 1)
+
+    if not candidates or not isinstance(candidates[0].get("id"), int):
+        return {
+            "source": "online-video-lookup",
+            "lookup_type": "person_credits",
+            "query": {"query": query, "type": media_type, "credit": credit_type},
+            "sources": {"tmdb": source_status(True, True, 0)},
+            "num_found": 0,
+            "results": [],
+        }
+
+    details = tmdb_person_details(settings, candidates[0]["id"])
+    results = tmdb_person_credits(details, media_type, credit_type, limit)
+    return {
+        "source": "online-video-lookup",
+        "lookup_type": "person_credits",
+        "query": {"query": query, "type": media_type, "credit": credit_type},
+        "sources": {"tmdb": source_status(True, True, len(results))},
+        "person": normalize_tmdb_person(details),
+        "num_found": len(results),
+        "results": results,
+    }
 
 
 def lookup_video(

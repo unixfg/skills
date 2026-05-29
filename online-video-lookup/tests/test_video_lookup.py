@@ -186,6 +186,79 @@ class VideoLookupTests(unittest.TestCase):
         self.assertIn("api_key=legacy-key", first_req.full_url)
         self.assertEqual("US", result["query"]["region"])
 
+    def test_tmdb_person_movie_credit_lookup_sorts_newest_first(self):
+        search_payload = {"results": [{"id": 321, "name": "GaTa"}]}
+        detail_payload = {
+            "id": 321,
+            "name": "GaTa",
+            "known_for_department": "Acting",
+            "external_ids": {"imdb_id": "nm10381726"},
+            "movie_credits": {
+                "cast": [
+                    {
+                        "id": 20,
+                        "title": "Older Movie",
+                        "release_date": "2023-01-01",
+                        "character": "Older Role",
+                    },
+                    {
+                        "id": 30,
+                        "title": "Newest Movie",
+                        "release_date": "2026-05-01",
+                        "character": "New Role",
+                    },
+                ],
+                "crew": [],
+            },
+            "tv_credits": {"cast": [], "crew": []},
+        }
+
+        def fake_urlopen(req, timeout):
+            if "/search/person" in req.full_url:
+                return FakeResponse(search_payload)
+            if "/person/321?" in req.full_url:
+                return FakeResponse(detail_payload)
+            raise AssertionError(req.full_url)
+
+        with mock.patch.dict(video_lookup.os.environ, {"TMDB_READ_ACCESS_TOKEN": "token"}, clear=True):
+            with mock.patch.object(video_lookup.request, "urlopen", side_effect=fake_urlopen) as urlopen:
+                result = video_lookup.lookup_person("Gata", "movie", "cast", 5)
+
+        first_req = urlopen.call_args_list[0].args[0]
+        self.assertIn("/search/person?", first_req.full_url)
+        self.assertEqual("Bearer token", first_req.headers["Authorization"])
+        self.assertEqual("person_credits", result["lookup_type"])
+        self.assertEqual("GaTa", result["person"]["name"])
+        self.assertEqual("https://www.imdb.com/name/nm10381726/", result["person"]["source_urls"]["imdb"])
+        self.assertEqual(["Newest Movie", "Older Movie"], [item["title"] for item in result["results"]])
+        self.assertEqual("New Role", result["results"][0]["role"])
+        self.assertEqual("https://www.themoviedb.org/movie/30", result["results"][0]["source_urls"]["tmdb"])
+
+    def test_tmdb_person_lookup_can_start_from_imdb_id(self):
+        find_payload = {"person_results": [{"id": 321, "name": "GaTa"}]}
+        detail_payload = {
+            "id": 321,
+            "name": "GaTa",
+            "external_ids": {"imdb_id": "nm10381726"},
+            "movie_credits": {"cast": [], "crew": []},
+            "tv_credits": {"cast": [], "crew": []},
+        }
+
+        def fake_urlopen(req, timeout):
+            if "/find/nm10381726" in req.full_url:
+                return FakeResponse(find_payload)
+            if "/person/321?" in req.full_url:
+                return FakeResponse(detail_payload)
+            raise AssertionError(req.full_url)
+
+        with mock.patch.dict(video_lookup.os.environ, {"TMDB_API_KEY": "legacy-key"}, clear=True):
+            with mock.patch.object(video_lookup.request, "urlopen", side_effect=fake_urlopen) as urlopen:
+                result = video_lookup.lookup_person("https://www.imdb.com/name/nm10381726/", "movie", "all", 5)
+
+        requested_urls = [call.args[0].full_url for call in urlopen.call_args_list]
+        self.assertTrue(any("/find/nm10381726" in url for url in requested_urls))
+        self.assertEqual("GaTa", result["person"]["name"])
+
     def test_tmdb_list_without_credentials_is_config_error(self):
         with mock.patch.dict(video_lookup.os.environ, {}, clear=True):
             with self.assertRaises(video_lookup.ScriptError) as ctx:

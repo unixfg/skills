@@ -66,6 +66,40 @@ Success payload:
 }
 ```
 
+## `lookup_person.py`
+
+```bash
+python3 scripts/lookup_person.py --query "Gata" --type movie --limit 5
+```
+
+Arguments:
+
+- `--query` person name, TMDB person URL, IMDb `nm...` id, or IMDb person URL.
+- `--type all|movie|tv`, default `all`.
+- `--credit all|cast|crew`, default `all`.
+- `--limit`, default `5`, max `10`.
+- `--timeout`, default `15`.
+
+Success payload:
+
+```json
+{
+  "source": "online-video-lookup",
+  "lookup_type": "person_credits",
+  "query": {"query": "Gata", "type": "movie", "credit": "all"},
+  "sources": {
+    "tmdb": {"available": true, "used": true, "num_found": 5}
+  },
+  "person": {"source": "TMDB", "name": "GaTa"},
+  "num_found": 5,
+  "results": []
+}
+```
+
+Results are sorted by known release or first-air date descending, with unknown
+dates last. Person lookup requires configured TMDB credentials and does not
+scrape IMDb.
+
 ## `list_video.py`
 
 ```bash

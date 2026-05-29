@@ -2,9 +2,9 @@
 name: online-video-lookup
 description: >
   Use this skill when the user asks for online movie or TV reference metadata,
-  Wikipedia/TMDB/TVDB lookups, release years, summaries, external IDs, source
-  URLs, or trailers after Plex is insufficient or when the question is not about
-  local availability. This skill uses Wikipedia always and optional configured
+  Wikipedia/TMDB/TVDB lookups, person movie/TV credits, release years,
+  summaries, external IDs, source URLs, or trailers after Plex is insufficient
+  or when the question is not about local availability. This skill uses Wikipedia always and optional configured
   TMDB/TVDB APIs through bundled read-only scripts.
 
   Do not use this skill to claim that a title exists in Plex, scrape IMDb, stream
@@ -24,12 +24,16 @@ library. For local availability, use `plex-media-library` first.
 1. If the user asks what is in the local library, search Plex first.
 2. Use `list_video.py --list ...` for TMDB list questions such as trending,
    popular, now-playing, upcoming, or top-rated movies and TV.
-3. Use `lookup_video.py --query ...` for outside metadata or Plex no-match
+3. Use `lookup_person.py --query ...` for actor/person filmography or
+   newest-credit questions such as "his newest movies" after resolving the
+   person from the user request or conversation context.
+4. Use `lookup_video.py --query ...` for title metadata or Plex no-match
    fallback.
-4. Add `--type movie` or `--type tv` when the user gives the format.
-5. Add `--include-trailers` only when trailers are requested or useful.
-6. If TMDB or TVDB credentials are missing, report those sources as skipped;
-   Wikipedia results remain valid.
+5. Add `--type movie` or `--type tv` when the user gives the format.
+6. Add `--include-trailers` only when trailers are requested or useful.
+7. If TMDB or TVDB credentials are missing, report those sources as skipped;
+   Wikipedia results remain valid for title lookup, while person credits require
+   TMDB.
 
 ## Common commands
 
@@ -43,6 +47,12 @@ List trending movies from TMDB when configured:
 
 ```bash
 python3 scripts/list_video.py --list trending --type movie --limit 5
+```
+
+Find person movie credits from TMDB when configured:
+
+```bash
+python3 scripts/lookup_person.py --query "Gata" --type movie --limit 5
 ```
 
 Find trailers from TMDB when configured:
