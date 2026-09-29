@@ -1,6 +1,6 @@
 # Repository Guidelines
 
-This repository is a collection of Codex/Tessl skills. Each top-level
+This repository is a collection of skills. Each top-level
 directory is expected to be a mostly self-contained skill package.
 
 These instructions apply to the whole repository unless a more specific
@@ -17,16 +17,12 @@ These instructions apply to the whole repository unless a more specific
 - `*/references/` holds detailed operational notes that would make `SKILL.md`
   too large.
 - `*/evals/` contains scenario tasks and criteria for skill evaluation.
-- `*/tile.json` describes publishable Tessl tiles when a skill is intended for
-  publication.
-- `.github/workflows/` contains tag-triggered publish workflows for individual
-  skills.
 
 ## Working Principles
 
 - Preserve skill boundaries. Changes for one skill should usually stay within
-  that skill directory and any directly related workflow files.
-- Keep `SKILL.md`, `references/`, scripts, tests, and `tile.json` consistent
+  that skill directory.
+- Keep `SKILL.md`, `references/`, scripts, and tests consistent
   when behavior changes.
 - Prefer the existing Python standard-library style unless a skill already has
   a stronger local convention.
@@ -73,11 +69,4 @@ When adding or substantially updating a skill:
   suspicious input sanitization.
 - Keep live-service behavior opt-in and human-triggered; tests should mock
   network calls.
-
-## Publishing Notes
-
-Existing publish workflows are triggered by explicit release tags such as
-`tessl-online-book-lookup-*`, `tessl-ebook-library-*`, and
-`tessl-prometheus-oidc-query-*`. If adding publication for another skill,
-follow the per-skill workflow shape already in `.github/workflows/`.
 
